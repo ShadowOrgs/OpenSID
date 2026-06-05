@@ -1,6 +1,6 @@
 import { getToken } from '@/auth/tokenStorage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:8081/api/mobile/v1';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:8081/api/mobile/v1';
 
 type RequestOptions = RequestInit & {
   auth?: boolean;
@@ -33,10 +33,20 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    throw new ApiError(
+      `Tidak bisa terhubung ke API (${API_URL}). ${error instanceof Error ? error.message : 'Periksa koneksi perangkat.'}`,
+      0,
+      { network: ['Pastikan HP/emulator bisa mengakses alamat API dan OpenSID sedang berjalan.'] }
+    );
+  }
 
   const payload = await response.json().catch(() => ({}));
 

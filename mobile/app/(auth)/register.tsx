@@ -66,7 +66,7 @@ export default function RegisterScreen() {
       await signIn(response.data);
       router.replace('/(tabs)');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Pendaftaran gagal.');
+      setError(err instanceof ApiError ? err.message : `Pendaftaran gagal: ${String(err)}`);
     } finally {
       setLoading(false);
     }

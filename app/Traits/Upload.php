@@ -411,7 +411,7 @@ trait Upload
 
             return $uploadData['file_name'];
         } catch (Exception $e) {
-            logger()->errror($e);
+            logger()->error($e);
 
             if ($isAjax) {
                 return json(['error' => $e->getMessage()], 400);
@@ -457,7 +457,7 @@ trait Upload
 
             return $uploadData['file_name'];
         } catch (Exception $e) {
-            logger()->errror($e);
+            logger()->error($e);
 
             if ($isAjax) {
                 return json(['error' => $e->getMessage()], 400);

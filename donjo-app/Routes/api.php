@@ -37,11 +37,42 @@
 
 // Mobile API Layanan Mandiri
 Route::group('api/mobile/v1', ['namespace' => 'mobile'], static function (): void {
+    Route::get('health', 'Mandiri@health');
     Route::post('auth/register', 'Mandiri@register');
     Route::post('auth/login', 'Mandiri@login');
     Route::post('auth/logout', 'Mandiri@logout');
     Route::get('auth/me', 'Mandiri@me');
     Route::get('dashboard', 'Mandiri@dashboard');
+    Route::get('profile', 'Mandiri@profile');
+    Route::get('family', 'Mandiri@family');
+    Route::post('profile/change-pin', 'Mandiri@changePin');
+    Route::get('print/biodata', 'Mandiri@printBiodataPdf');
+    Route::get('print/kk', 'Mandiri@printKkPdf');
+    Route::get('surat/types', 'Mandiri@suratTypes');
+    Route::get('surat/types/{id}', 'Mandiri@suratType');
+    Route::get('surat/requests', 'Mandiri@suratRequests');
+    Route::post('surat/requests', 'Mandiri@createSuratRequest');
+    Route::get('surat/requests/{id}', 'Mandiri@suratRequest');
+    Route::get('documents', 'Mandiri@documents');
+    Route::post('documents', 'Mandiri@uploadDocument');
+    Route::get('assistance', 'Mandiri@assistance');
+    Route::get('perangkat', 'Mandiri@perangkat');
+    Route::get('lapak', 'Mandiri@lapak');
+    Route::get('articles', 'Mandiri@articles');
+    Route::get('articles/{id}', 'Mandiri@article');
+    Route::get('gallery', 'Mandiri@gallery');
+    Route::get('gallery/{id}', 'Mandiri@galleryDetail');
+    Route::get('sinergi-program', 'Mandiri@synergyPrograms');
+    Route::get('agenda', 'Mandiri@agenda');
+    Route::get('informasi-publik', 'Mandiri@publicDocuments');
+    Route::get('info-desa', 'Mandiri@villageInfo');
+    Route::get('complaints', 'Mandiri@complaints');
+    Route::post('complaints', 'Mandiri@createComplaint');
+    Route::get('satisfaction', 'Mandiri@satisfaction');
+    Route::post('satisfaction', 'Mandiri@createSatisfaction');
+    Route::post('pesan', 'Mandiri@sendMessage');
+    Route::get('pesan/detail/{uuid}', 'Mandiri@message');
+    Route::get('pesan/{box?}', 'Mandiri@messages');
 });
 
 // Internal API

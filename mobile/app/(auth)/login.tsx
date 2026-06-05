@@ -1,5 +1,5 @@
 import { login } from '@/api/auth';
-import { ApiError } from '@/api/client';
+import { API_URL, ApiError } from '@/api/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -21,7 +21,7 @@ export default function LoginScreen() {
       await signIn(response.data);
       router.replace('/(tabs)');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Login gagal.');
+      setError(err instanceof ApiError ? err.message : `Login gagal: ${String(err)}`);
     } finally {
       setLoading(false);
     }
@@ -36,6 +36,7 @@ export default function LoginScreen() {
       <TextInput style={styles.input} placeholder="PIN" keyboardType="number-pad" maxLength={6} secureTextEntry value={password} onChangeText={setPassword} />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Text style={styles.apiUrl}>API: {API_URL}</Text>
 
       <Pressable style={styles.button} onPress={submit} disabled={loading}>
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Masuk</Text>}
@@ -54,6 +55,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '800', color: '#15323d', marginBottom: 24 },
   input: { height: 48, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 14, marginBottom: 12, borderWidth: 1, borderColor: '#d9e3e8' },
   error: { color: '#c62828', marginBottom: 12 },
+  apiUrl: { color: '#607d89', fontSize: 12, marginBottom: 12 },
   button: { height: 48, borderRadius: 8, backgroundColor: '#009966', alignItems: 'center', justifyContent: 'center' },
   buttonText: { color: '#fff', fontWeight: '700' },
   secondaryButton: { marginTop: 14, alignItems: 'center' },

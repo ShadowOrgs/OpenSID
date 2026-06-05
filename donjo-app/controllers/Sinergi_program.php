@@ -206,14 +206,25 @@ class Sinergi_program extends Admin_Controller
                 'overwrite'     => true,
             ],
             callback: static function ($uploadData) {
-                Image::load($uploadData['full_path'])
-                    ->format(Manipulations::FORMAT_WEBP)
-                    ->save("{$uploadData['file_path']}{$uploadData['raw_name']}.webp");
+                $webpPath = "{$uploadData['file_path']}{$uploadData['raw_name']}.webp";
 
-                // Hapus original file
-                unlink($uploadData['full_path']);
+                try {
+                    Image::load($uploadData['full_path'])
+                        ->format(Manipulations::FORMAT_WEBP)
+                        ->save($webpPath);
 
-                return "{$uploadData['raw_name']}.webp";
+                    // Hapus original file jika konversi WebP berhasil.
+                    unlink($uploadData['full_path']);
+
+                    return "{$uploadData['raw_name']}.webp";
+                } catch (Throwable $e) {
+                    logger()->warning('Gagal mengonversi gambar sinergi program ke WebP. File original digunakan.', [
+                        'file'  => $uploadData['file_name'],
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    return $uploadData['file_name'];
+                }
             }
         );
     }
