@@ -26,6 +26,11 @@ version.json
 Obfuscator.php
 
 # Abaikan isian folder vendor
+vendor/*
+!vendor/codeigniter/
+!vendor/codeigniter/framework/
+!vendor/codeigniter/framework/system/
+!vendor/codeigniter/framework/system/**
 vendor/codeigniter/framework/*
 !vendor/codeigniter/framework/system/
 

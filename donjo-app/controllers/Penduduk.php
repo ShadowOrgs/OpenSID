@@ -627,11 +627,11 @@ class Penduduk extends Admin_Controller
             $penduduk = PendudukModel::baru($data);
             DB::commit();
             redirect_with('success', 'Penduduk baru berhasil ditambahkan', ci_route('penduduk.detail', $penduduk->id));
-        } catch (Exception $e) {
-            log_message('error', $e->getMessage());
+        } catch (Throwable $e) {
+            logger()->error($e);
             DB::rollBack();
             set_session('old_input', $originalInput);
-            redirect_with('error', 'Penduduk baru gagal ditambahkan', ci_route('penduduk.form_peristiwa.' . $data['jenis_peristiwa']));
+            redirect_with('error', $this->formatPendudukException($e, 'ditambahkan'), ci_route('penduduk.form_peristiwa.' . $data['jenis_peristiwa']));
         }
     }
 
@@ -686,12 +686,95 @@ class Penduduk extends Admin_Controller
             $penduduk->ubah($data);
             DB::commit();
             redirect_with('success', 'Penduduk berhasil diubah', ci_route('penduduk.detail', $penduduk->id));
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             logger()->error($e);
             DB::rollBack();
             set_session('old_input', $originalInput);
-            redirect_with('error', 'Penduduk baru gagal diubah', ci_route('penduduk.form.', $id));
+            redirect_with('error', $this->formatPendudukException($e, 'diubah'), ci_route('penduduk.form.', $id));
         }
+    }
+
+    private function formatPendudukException(Throwable $exception, string $aksi): string
+    {
+        $message = $exception->getMessage();
+        $prefix  = "Penduduk gagal {$aksi}.";
+
+        if (preg_match("/Field '([^']+)' doesn't have a default value/i", $message, $matches)) {
+            return "{$prefix} " . $this->labelKolomPenduduk($matches[1]) . ' wajib diisi.';
+        }
+
+        if (preg_match("/Column '([^']+)' cannot be null/i", $message, $matches)) {
+            return "{$prefix} " . $this->labelKolomPenduduk($matches[1]) . ' wajib diisi.';
+        }
+
+        if (preg_match("/Data too long for column '([^']+)'/i", $message, $matches)) {
+            return "{$prefix} " . $this->labelKolomPenduduk($matches[1]) . ' terlalu panjang.';
+        }
+
+        if (preg_match("/Incorrect (date|datetime) value: '([^']*)' for column `?([^`']+)`?/i", $message, $matches)) {
+            return "{$prefix} Format " . strtolower($this->labelKolomPenduduk($matches[3])) . ' tidak valid.';
+        }
+
+        if (preg_match("/Incorrect integer value: '([^']*)' for column `[^`]+`.`[^`]+`.`([^`]+)`/i", $message, $matches)) {
+            return "{$prefix} " . $this->labelKolomPenduduk($matches[2]) . ' wajib diisi dengan angka yang valid.';
+        }
+
+        if (str_contains($message, 'Duplicate entry')) {
+            if (str_contains($message, 'nik_config')) {
+                return "{$prefix} NIK sudah digunakan oleh penduduk lain.";
+            }
+            if (str_contains($message, 'email_config')) {
+                return "{$prefix} Email sudah digunakan oleh penduduk lain.";
+            }
+            if (str_contains($message, 'telegram_config')) {
+                return "{$prefix} Telegram sudah digunakan oleh penduduk lain.";
+            }
+            if (str_contains($message, 'tag_id_card_config')) {
+                return "{$prefix} Tag ID Card sudah digunakan oleh penduduk lain.";
+            }
+
+            return "{$prefix} Data yang dimasukkan sudah pernah digunakan.";
+        }
+
+        if (str_contains($message, 'foreign key constraint fails')) {
+            if (str_contains($message, 'tweb_penduduk_kk_fk')) {
+                return "{$prefix} Keluarga atau Nomor KK yang dipilih tidak valid.";
+            }
+            if (str_contains($message, 'tweb_penduduk_cluster_fk')) {
+                return "{$prefix} Wilayah RT/RW/Dusun yang dipilih tidak valid.";
+            }
+            if (str_contains($message, 'fk_tweb_penduduk')) {
+                return "{$prefix} Log penduduk tidak dapat dibuat karena data penduduk belum valid.";
+            }
+
+            return "{$prefix} Ada data referensi yang tidak valid. Periksa pilihan keluarga, wilayah, dan data rujukan lainnya.";
+        }
+
+        return "{$prefix} {$message}";
+    }
+
+    private function labelKolomPenduduk(string $kolom): string
+    {
+        return [
+            'nama'                      => 'Nama',
+            'nik'                       => 'NIK',
+            'id_kk'                     => 'Keluarga atau Nomor KK',
+            'kk_level'                  => 'Hubungan dalam keluarga',
+            'sex'                       => 'Jenis kelamin',
+            'tempatlahir'               => 'Tempat lahir',
+            'tanggallahir'              => 'Tanggal lahir',
+            'agama_id'                  => 'Agama',
+            'pendidikan_kk_id'          => 'Pendidikan dalam KK',
+            'pekerjaan_id'              => 'Pekerjaan',
+            'status_kawin'              => 'Status kawin',
+            'warganegara_id'            => 'Warga negara',
+            'golongan_darah_id'         => 'Golongan darah',
+            'id_cluster'                => 'Wilayah RT/RW/Dusun',
+            'tgl_lapor'                 => 'Tanggal lapor',
+            'tgl_peristiwa'             => 'Tanggal peristiwa',
+            'kode_peristiwa'            => 'Jenis peristiwa',
+            'maksud_tujuan_kedatangan'  => 'Maksud tujuan kedatangan',
+        ][$kolom] ?? "Kolom {$kolom}";
     }
 
     public function delete($id = '', $semua = false): void

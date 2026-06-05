@@ -2,6 +2,7 @@
 
 @section('content')
     <form id="validasi" action="<?= $form_action ?>" method="post" class="login-form" enctype="multipart/form-data">
+        <input type="hidden" name="{{ $token_name }}" value="{{ $token_value }}">
         <h3><strong>PENDAFTARAN AKUN LAYANAN MANDIRI</strong></h3>
         <div class="row">
             <div class="col-md-6">
@@ -88,9 +89,9 @@
                             style="height: 35px"
                             type="text"
                             autocomplete="off"
-                            class="form-control required <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber') ?>"
+                            class="form-control <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber') ?>"
                             name="telegram"
-                            placeholder="Telegram"
+                            placeholder="Telegram (opsional)"
                             value="{{ old('telegram') }}"
                         >
                         <span class="input-group-addon"><i onclick="window.open('https://t.me/opensid_notifikasi_bot', '_blank');" class="fa fa-search"></i></span>

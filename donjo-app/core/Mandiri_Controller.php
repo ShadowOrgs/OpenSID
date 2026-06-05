@@ -68,25 +68,5 @@ class Mandiri_Controller extends MY_Controller
             return redirect($redirectUrl);
         }
 
-        // Verifikasi jika pengguna sudah terautentikasi pada guard 'penduduk'.
-        if (auth('penduduk')->check()) {
-            /** @var App\Models\PendudukMandiri $user */
-            $user = auth('penduduk')->user();
-
-            $isMustVerify         = $user instanceof Illuminate\Contracts\Auth\MustVerifyEmail;
-            $hasVerifiedEmail     = $isMustVerify && $user->hasVerifiedEmail();
-            $hasVerifiedTelegram  = $isMustVerify && $user->hasVerifiedTelegram();
-            $hasRequiredDocuments = $user->scan_ktp !== null && $user->scan_kk !== null && $user->foto_selfie !== null;
-
-            // Periksa jika pengguna belum verifikasi email atau telegram dan sudah memiliki dokumen yang diperlukan.
-            if (! $hasVerifiedEmail && $hasRequiredDocuments) {
-                // Pengguna belum melakukan verifikasi email, arahkan ke halaman verifikasi email
-                return redirect('layanan-mandiri/daftar/verifikasi/email');
-            }
-            if (! $hasVerifiedTelegram && $hasRequiredDocuments) {
-                // Pengguna belum melakukan verifikasi Telegram, arahkan ke halaman verifikasi Telegram
-                return redirect('layanan-mandiri/daftar/verifikasi/telegram');
-            }
-        }
     }
 }

@@ -107,24 +107,44 @@ class StrukturTabelSeeder extends Seeder
             return;
         }
 
+        $columns     = Schema::getColumnListing($tableName);
+        $labelColumn = collect(['nama', 'subjek', 'tipe'])
+            ->first(static fn (string $column): bool => in_array($column, $columns, true));
+
+        if ($labelColumn === null) {
+            return;
+        }
+
         $data = [];
 
         // Cek apakah enum menggunakan method all() (untuk legacy code)
         if (method_exists($enumClass, 'all')) {
             foreach ($enumClass::all() as $id => $nama) {
-                $data[] = [
-                    'id'   => $id,
-                    'nama' => $nama,
+                $row = [
+                    'id'         => $id,
+                    $labelColumn => $nama,
                 ];
+
+                if (in_array('inisial', $columns, true)) {
+                    $row['inisial'] = '';
+                }
+
+                $data[] = $row;
             }
         }
         // Cek apakah enum menggunakan method labels() (untuk enum PHP 8.1+)
         elseif (method_exists($enumClass, 'labels')) {
             foreach ($enumClass::labels() as $id => $nama) {
-                $data[] = [
-                    'id'   => $id,
-                    'nama' => $nama,
+                $row = [
+                    'id'         => $id,
+                    $labelColumn => $nama,
                 ];
+
+                if (in_array('inisial', $columns, true)) {
+                    $row['inisial'] = '';
+                }
+
+                $data[] = $row;
             }
         } else {
             return;

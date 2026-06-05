@@ -54,6 +54,13 @@ class Notifikasi extends BaseModel
     protected $table = 'notifikasi';
 
     /**
+     * Tabel notifikasi tidak memiliki kolom created_at.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    /**
      * The guarded with the model.
      *
      * @var array

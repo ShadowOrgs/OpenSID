@@ -39,6 +39,7 @@ namespace App\Listeners\Penduduk;
 
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Throwable;
 
 class SendTelegramVerificationNotification
 {
@@ -52,7 +53,11 @@ class SendTelegramVerificationNotification
         }
 
         if ($event->user instanceof MustVerifyEmail && ! $event->user->hasVerifiedTelegram()) {
-            $event->user->sendTelegramVerificationNotification();
+            try {
+                $event->user->sendTelegramVerificationNotification();
+            } catch (Throwable $e) {
+                logger()->error($e);
+            }
         }
     }
 }

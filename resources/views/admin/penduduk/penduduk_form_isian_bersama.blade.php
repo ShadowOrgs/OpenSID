@@ -150,8 +150,8 @@
         <div class='form-group'>
             <label for="kk_level">Hubungan Dalam Keluarga</label>
             @php
-                // Disable jika penduduk adalah Kepala Keluarga atau belum punya id_kk
-                $disableKkLevel = ($penduduk['kk_level'] == \App\Enums\SHDKEnum::KEPALA_KELUARGA) || empty($penduduk['id_kk']);
+                // Kunci hanya untuk edit data yang memang tidak boleh mengubah SHDK.
+                $disableKkLevel = ! empty($id) && (($penduduk['kk_level'] == \App\Enums\SHDKEnum::KEPALA_KELUARGA) || empty($penduduk['id_kk']));
             @endphp
             @if ($jenis_peristiwa == 1)
                 <select id="kk_level" class="form-control input-sm required select2" name="kk_level"

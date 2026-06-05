@@ -35,6 +35,15 @@
  *
  */
 
+// Mobile API Layanan Mandiri
+Route::group('api/mobile/v1', ['namespace' => 'mobile'], static function (): void {
+    Route::post('auth/register', 'Mandiri@register');
+    Route::post('auth/login', 'Mandiri@login');
+    Route::post('auth/logout', 'Mandiri@logout');
+    Route::get('auth/me', 'Mandiri@me');
+    Route::get('dashboard', 'Mandiri@dashboard');
+});
+
 // Internal API
 Route::group('internal_api', ['namespace' => 'internal_api'], static function (): void {
     // Wilayah

@@ -436,6 +436,14 @@ class Penduduk extends BaseModel implements AuthenticatableContract
         if ($data['warganegara_id'] == 1 || empty($data['dokumen_kitas'])) {
             $data['dokumen_kitas'] = '-';
         }
+
+        if (empty($data['kk_level'])) {
+            $result['status']   = false;
+            $result['messages'] = 'Hubungan dalam keluarga wajib diisi';
+
+            return $result;
+        }
+
         // Tanggal cetak ktp harus <= tanggal input
         if ($data['tanggal_cetak_ktp'] > date('Y-m-d')) {
             $data['tanggal_cetak_ktp'] = date('Y-m-d');

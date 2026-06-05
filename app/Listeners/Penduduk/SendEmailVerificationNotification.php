@@ -39,6 +39,7 @@ namespace App\Listeners\Penduduk;
 
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Throwable;
 
 class SendEmailVerificationNotification
 {
@@ -52,7 +53,11 @@ class SendEmailVerificationNotification
         }
 
         if ($event->user instanceof MustVerifyEmail && ! $event->user->hasVerifiedEmail()) {
-            $event->user->sendEmailVerificationNotification();
+            try {
+                $event->user->sendEmailVerificationNotification();
+            } catch (Throwable $e) {
+                logger()->error($e);
+            }
         }
     }
 }
