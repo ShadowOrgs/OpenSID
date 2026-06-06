@@ -5,6 +5,8 @@
 .cache-rector
 .php-cs-fixer.cache
 .phpunit.result.cache
+.env
+.env.*
 
 node_modules
 mobile/node_modules

@@ -132,6 +132,7 @@ tests/playwright/.cache/
 
 # Environment configuration (store secrets locally, not in Git)
 /.env
+/.env.*
 tests/playwright/.env
 .playwright-mcp
 .e2e.env

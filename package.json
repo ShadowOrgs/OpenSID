@@ -1,6 +1,8 @@
 {
   "private": true,
   "scripts": {
+    "dev:setup": "bash scripts/dev-setup.sh",
+    "dev:setup:reset": "bash scripts/dev-setup.sh --reset-db",
     "dev:mobile": "bash scripts/dev-mobile.sh",
     "dev:mobile:usb": "bash scripts/dev-mobile.sh --usb",
     "prettier-blade": "prettier \"{resources/views,Modules/**/Views/,storage/**/resources/views}/{**,**/**,**/**/**}.blade.php\" --write"

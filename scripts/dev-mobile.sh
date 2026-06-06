@@ -19,6 +19,7 @@ Options:
   --lan      Gunakan IP LAN laptop untuk API mobile. Default.
   --usb      Gunakan adb reverse dan API http://127.0.0.1:${WEB_PORT}.
   --no-expo  Hanya start container dan update mobile/.env, tidak start Expo.
+  --no-setup Jangan bootstrap otomatis saat container belum ada.
 
 Environment override:
   WEB_CONTAINER=${WEB_CONTAINER}
@@ -30,6 +31,7 @@ USAGE
 }
 
 START_EXPO=1
+AUTO_SETUP=1
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -41,6 +43,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-expo)
       START_EXPO=0
+      ;;
+    --no-setup)
+      AUTO_SETUP=0
       ;;
     -h|--help)
       usage
@@ -82,6 +87,20 @@ start_container_if_exists() {
   else
     echo "Container $name tidak ditemukan, dilewati."
   fi
+}
+
+ensure_dev_setup() {
+  if container_exists "$DB_CONTAINER" && container_exists "$WEB_CONTAINER"; then
+    return
+  fi
+
+  if [[ "$AUTO_SETUP" -eq 0 ]]; then
+    echo "Container dev belum lengkap dan auto setup dimatikan." >&2
+    exit 1
+  fi
+
+  echo "Container dev belum lengkap. Jalankan bootstrap otomatis..."
+  "$ROOT_DIR/scripts/dev-setup.sh"
 }
 
 detect_lan_ip() {
@@ -149,6 +168,7 @@ main() {
   require_cmd docker
   require_cmd curl
 
+  ensure_dev_setup
   start_container_if_exists "$DB_CONTAINER"
   start_container_if_exists "$WEB_CONTAINER"
   wait_for_web

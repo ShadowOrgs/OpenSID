@@ -6,6 +6,7 @@
   "scripts": {
     "start": "expo start",
     "start:dev": "expo start --dev-client",
+    "dev:setup": "bash ../scripts/dev-setup.sh",
     "dev:opensid": "bash ../scripts/dev-mobile.sh",
     "dev:opensid:usb": "bash ../scripts/dev-mobile.sh --usb",
     "android": "expo start --android",
