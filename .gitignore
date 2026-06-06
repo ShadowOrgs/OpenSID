@@ -14,6 +14,12 @@ mitra
 generate-route.php
 index.php
 
+# Seed database dummy yang sengaja disimpan di git
+!/database/
+!/database/dummy/
+!/database/dummy/README.md
+!/database/dummy/opensid-dummy.sql
+
 # Abaikan file cache milik phpintel (plugin sublime text)
 .phpintel/*
 .idea/*
@@ -125,6 +131,7 @@ test-results/
 tests/playwright/.cache/
 
 # Environment configuration (store secrets locally, not in Git)
+/.env
 tests/playwright/.env
 .playwright-mcp
 .e2e.env
