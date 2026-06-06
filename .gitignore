@@ -64,6 +64,7 @@ vendor/libreoffice/*
 vendor/mikey179/*
 .vscode/*
 /node_modules
+/dist
 .cache-rector/*
 !.cache-rector/.gitkeep
 
