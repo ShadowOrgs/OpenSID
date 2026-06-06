@@ -13,10 +13,19 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "id.opensid.mandiri",
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#0b8fac"
-      }
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -29,6 +38,12 @@
         }
       ],
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "142a3c8e-3870-4039-b7e7-dd0b57fb19ec"
+      }
+    }
   }
 }

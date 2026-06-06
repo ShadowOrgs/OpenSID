@@ -1,6 +1,8 @@
 {
   "private": true,
   "scripts": {
+    "dev:mobile": "bash scripts/dev-mobile.sh",
+    "dev:mobile:usb": "bash scripts/dev-mobile.sh --usb",
     "prettier-blade": "prettier \"{resources/views,Modules/**/Views/,storage/**/resources/views}/{**,**/**,**/**/**}.blade.php\" --write"
   },
   "devDependencies": {

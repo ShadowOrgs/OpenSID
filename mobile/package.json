@@ -5,9 +5,18 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
+    "start:dev": "expo start --dev-client",
+    "dev:opensid": "bash ../scripts/dev-mobile.sh",
+    "dev:opensid:usb": "bash ../scripts/dev-mobile.sh --usb",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:android:dev": "eas build --platform android --profile development",
+    "build:android:dev:local": "eas build --platform android --profile development --local",
+    "build:android:preview": "eas build --platform android --profile preview",
+    "build:android:preview:local": "eas build --platform android --profile preview --local",
+    "build:android:aab": "eas build --platform android --profile production",
+    "build:android:aab:local": "eas build --platform android --profile production --local",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -35,6 +44,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
+    "eas-cli": "^20.1.0",
     "typescript": "~5.9.2"
   }
 }
