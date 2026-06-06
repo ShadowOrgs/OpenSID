@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { getPrintUrl, getProfile, type Biodata } from '@/api/services';
+import { AppButton } from '@/components/AppButton';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 const LABELS: Record<string, string> = {
   nama: 'Nama',
@@ -24,14 +26,41 @@ const LABELS: Record<string, string> = {
 export default function BiodataScreen() {
   const [data, setData] = useState<Biodata | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    getProfile()
-      .then((response) => setData(response.data.biodata))
-      .catch((error) => setMessage(error instanceof Error ? error.message : 'Biodata gagal dimuat.'))
-      .finally(() => setLoading(false));
-  }, []);
+  async function loadData() {
+    const response = await getProfile();
+    setData(response.data.biodata);
+  }
+
+  useRefreshOnFocus(async (isInitial) => {
+    if (isInitial) {
+      setLoading(true);
+    }
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Biodata gagal dimuat.');
+    } finally {
+      if (isInitial) {
+        setLoading(false);
+      }
+    }
+  });
+
+  async function onRefresh() {
+    setRefreshing(true);
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Biodata gagal dimuat.');
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   async function openPdf() {
     const url = await getPrintUrl('biodata');
@@ -39,12 +68,10 @@ export default function BiodataScreen() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Text style={styles.title}>Biodata</Text>
       {message ? <Text style={styles.notice}>{message}</Text> : null}
-      <Pressable style={styles.printButton} onPress={openPdf}>
-        <Text style={styles.printButtonText}>Cetak PDF</Text>
-      </Pressable>
+      <AppButton label="Cetak PDF" icon="print" onPress={openPdf} />
       <View style={styles.section}>
         {loading ? (
           <ActivityIndicator color="#0088a8" />
@@ -68,8 +95,6 @@ const styles = StyleSheet.create({
   content: { padding: 20, gap: 12 },
   title: { fontSize: 24, fontWeight: '800', color: '#15323d' },
   notice: { borderRadius: 8, backgroundColor: '#fdecec', color: '#b42318', padding: 12, fontWeight: '700' },
-  printButton: { alignItems: 'center', borderRadius: 8, backgroundColor: '#0088a8', paddingVertical: 13 },
-  printButtonText: { color: '#fff', fontWeight: '800' },
   section: { borderRadius: 8, backgroundColor: '#fff', padding: 14 },
   row: { gap: 4, borderBottomWidth: 1, borderBottomColor: '#e2eaee', paddingVertical: 10 },
   label: { color: '#7a929c', fontWeight: '700' },

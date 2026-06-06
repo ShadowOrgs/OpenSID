@@ -1,22 +1,50 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { getAssistance, type Assistance } from '@/api/services';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 export default function BantuanScreen() {
   const [items, setItems] = useState<Assistance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    getAssistance()
-      .then((response) => setItems(response.data.items))
-      .catch((error) => setMessage(error instanceof Error ? error.message : 'Data bantuan gagal dimuat.'))
-      .finally(() => setLoading(false));
-  }, []);
+  async function loadData() {
+    const response = await getAssistance();
+    setItems(response.data.items);
+  }
+
+  useRefreshOnFocus(async (isInitial) => {
+    if (isInitial) {
+      setLoading(true);
+    }
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Data bantuan gagal dimuat.');
+    } finally {
+      if (isInitial) {
+        setLoading(false);
+      }
+    }
+  });
+
+  async function onRefresh() {
+    setRefreshing(true);
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Data bantuan gagal dimuat.');
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Text style={styles.title}>Bantuan</Text>
       {message ? <Text style={styles.notice}>{message}</Text> : null}
       {loading ? (

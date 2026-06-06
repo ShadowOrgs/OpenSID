@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { getDocuments, uploadDocument, type MandiriDocument } from '@/api/documents';
+import { AppButton } from '@/components/AppButton';
+import { AppDialog } from '@/components/AppDialog';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 export default function DokumenScreen() {
   const [items, setItems] = useState<MandiriDocument[]>([]);
@@ -13,17 +16,26 @@ export default function DokumenScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
 
   const loadData = useCallback(async () => {
     const response = await getDocuments();
     setItems(response.data.items);
   }, []);
 
-  useEffect(() => {
+  useRefreshOnFocus((isInitial) => {
+    if (isInitial) {
+      setLoading(true);
+    }
+    setMessage(null);
     loadData()
       .catch((error) => setMessage(error instanceof Error ? error.message : 'Dokumen gagal dimuat.'))
-      .finally(() => setLoading(false));
-  }, [loadData]);
+      .finally(() => {
+        if (isInitial) {
+          setLoading(false);
+        }
+      });
+  });
 
   async function refresh() {
     setRefreshing(true);
@@ -62,12 +74,12 @@ export default function DokumenScreen() {
       setName('');
       setSyaratId('');
       await loadData();
-      setMessage('Dokumen berhasil diunggah.');
+      setDialog({ title: 'Berhasil', message: 'Dokumen berhasil diunggah.', variant: 'success' });
     } catch (error) {
       if (error instanceof ApiError) {
-        setMessage(Object.values(error.errors).flat()[0] ?? error.message);
+        setDialog({ title: 'Gagal', message: Object.values(error.errors).flat()[0] ?? error.message, variant: 'error' });
       } else {
-        setMessage(error instanceof Error ? error.message : 'Dokumen gagal diunggah.');
+        setDialog({ title: 'Gagal', message: error instanceof Error ? error.message : 'Dokumen gagal diunggah.', variant: 'error' });
       }
     } finally {
       setUploading(false);
@@ -94,9 +106,7 @@ export default function DokumenScreen() {
           style={styles.input}
           placeholderTextColor="#8ba0a8"
         />
-        <Pressable style={[styles.button, uploading && styles.disabled]} onPress={pickAndUpload} disabled={uploading}>
-          <Text style={styles.buttonText}>{uploading ? 'Mengunggah...' : 'Pilih File'}</Text>
-        </Pressable>
+        <AppButton label={uploading ? 'Mengunggah...' : 'Pilih File'} icon="cloud-upload" onPress={pickAndUpload} loading={uploading} />
       </View>
 
       <View style={styles.section}>
@@ -111,10 +121,20 @@ export default function DokumenScreen() {
               <Text style={styles.itemTitle}>{item.nama}</Text>
               <Text style={styles.itemText}>{item.nama_syarat ?? 'Tanpa jenis syarat'}</Text>
               <Text style={styles.itemMeta}>{item.file_name ?? '-'}</Text>
+              {item.file_url ? (
+                <AppButton label="Lihat Dokumen" icon="eye" compact onPress={() => Linking.openURL(item.file_url!)} />
+              ) : null}
             </View>
           ))
         )}
       </View>
+      <AppDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ''}
+        message={dialog?.message ?? ''}
+        variant={dialog?.variant}
+        onClose={() => setDialog(null)}
+      />
     </ScrollView>
   );
 }
@@ -127,9 +147,6 @@ const styles = StyleSheet.create({
   section: { gap: 10, borderRadius: 8, backgroundColor: '#fff', padding: 14 },
   sectionTitle: { color: '#15323d', fontSize: 16, fontWeight: '800' },
   input: { minHeight: 46, borderWidth: 1, borderColor: '#c7d6dd', borderRadius: 8, paddingHorizontal: 12, color: '#15323d' },
-  button: { alignItems: 'center', borderRadius: 8, backgroundColor: '#00945f', paddingVertical: 13 },
-  disabled: { opacity: 0.55 },
-  buttonText: { color: '#fff', fontWeight: '800' },
   empty: { color: '#55727e' },
   item: { gap: 5, borderTopWidth: 1, borderTopColor: '#e2eaee', paddingTop: 12 },
   itemTitle: { color: '#15323d', fontWeight: '800' },

@@ -29,6 +29,18 @@ export type DashboardResponse = {
     logo_url: string | null;
   };
   user: MandiriUser;
+  slider: Array<{
+    id: number;
+    judul: string;
+    gambar_url: string | null;
+    url: string;
+  }>;
+  teks_berjalan: Array<{
+    id: number;
+    teks: string;
+    tautan: string | null;
+    judul_tautan: string | null;
+  }>;
   menus: Array<{ key: string; label: string; icon: string }>;
   quick_links: Array<{ key: string; label: string }>;
 };

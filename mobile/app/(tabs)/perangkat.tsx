@@ -1,22 +1,50 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { getPerangkat, type Perangkat } from '@/api/services';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 export default function PerangkatScreen() {
   const [items, setItems] = useState<Perangkat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    getPerangkat()
-      .then((response) => setItems(response.data.items))
-      .catch((error) => setMessage(error instanceof Error ? error.message : 'Data perangkat gagal dimuat.'))
-      .finally(() => setLoading(false));
-  }, []);
+  async function loadData() {
+    const response = await getPerangkat();
+    setItems(response.data.items);
+  }
+
+  useRefreshOnFocus(async (isInitial) => {
+    if (isInitial) {
+      setLoading(true);
+    }
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Data perangkat gagal dimuat.');
+    } finally {
+      if (isInitial) {
+        setLoading(false);
+      }
+    }
+  });
+
+  async function onRefresh() {
+    setRefreshing(true);
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Data perangkat gagal dimuat.');
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Text style={styles.title}>Perangkat Desa</Text>
       {message ? <Text style={styles.notice}>{message}</Text> : null}
       {loading ? (

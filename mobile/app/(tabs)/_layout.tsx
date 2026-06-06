@@ -5,9 +5,10 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: '#0088a8' },
+        headerStyle: { backgroundColor: '#0073b7' },
         headerTintColor: '#fff',
-        tabBarActiveTintColor: '#0088a8',
+        tabBarActiveTintColor: '#0073b7',
+        tabBarInactiveTintColor: '#6b7f87',
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Beranda', tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} /> }} />

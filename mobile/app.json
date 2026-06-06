@@ -6,7 +6,9 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -16,6 +18,17 @@
         "backgroundColor": "#0b8fac"
       }
     },
-    "plugins": ["expo-router", "expo-secure-store"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Aplikasi membutuhkan akses galeri untuk menyimpan gambar.",
+          "savePhotosPermission": "Aplikasi membutuhkan izin untuk menyimpan gambar ke galeri."
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

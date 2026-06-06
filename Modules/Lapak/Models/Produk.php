@@ -277,7 +277,7 @@ class Produk extends BaseModel
 
             $uploadData = ci()->upload->data()['file_name'];
 
-            if (extension_loaded('gd')) {
+            if (extension_loaded('gd') && \opensid_support_webp()) {
                 Image::load(ci()->upload->data('full_path'))
                     ->useImageDriver('gd')
                     ->format(Manipulations::FORMAT_WEBP)

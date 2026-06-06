@@ -8,6 +8,7 @@ type AuthContextValue = {
   isLoading: boolean;
   signIn: (payload: AuthResponse) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -49,6 +50,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     signOut: async () => {
       await clearToken();
       setUser(null);
+    },
+    refreshUser: async () => {
+      const response = await me();
+      setUser(response.data.user);
     },
   }), [isLoading, user]);
 

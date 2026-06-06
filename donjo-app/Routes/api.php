@@ -54,6 +54,7 @@ Route::group('api/mobile/v1', ['namespace' => 'mobile'], static function (): voi
     Route::post('surat/requests', 'Mandiri@createSuratRequest');
     Route::get('surat/requests/{id}', 'Mandiri@suratRequest');
     Route::get('documents', 'Mandiri@documents');
+    Route::get('documents/{id}/file', 'Mandiri@documentFile');
     Route::post('documents', 'Mandiri@uploadDocument');
     Route::get('assistance', 'Mandiri@assistance');
     Route::get('perangkat', 'Mandiri@perangkat');

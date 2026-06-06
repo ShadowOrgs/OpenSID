@@ -6,6 +6,7 @@ export type MandiriDocument = {
   id_syarat: number | null;
   nama_syarat: string | null;
   file_name: string | null;
+  file_url: string | null;
   uploaded_at: string | null;
 };
 

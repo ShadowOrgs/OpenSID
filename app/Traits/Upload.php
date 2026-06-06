@@ -70,6 +70,13 @@ trait Upload
                     return "{$rawName}.gif";
                 }
                 if ($extension === 'webp') {
+                    if (! opensid_support_webp()) {
+                        copy($uploadData['full_path'], "{$filePath}kecil_{$rawName}.webp");
+                        copy($uploadData['full_path'], "{$filePath}sedang_{$rawName}.webp");
+                        unlink($uploadData['full_path']);
+
+                        return "{$rawName}.webp";
+                    }
 
                     // untuk kebutuhan og:image thumbnail share medsos
                     // WA tidak bisa mengload thumbnail .webp
@@ -126,7 +133,7 @@ trait Upload
                             ->save($sedang);
 
                         compressPng($sedang, 9);
-                    } else {
+                    } elseif (opensid_support_webp()) {
                         Image::load($uploadData['full_path'])
                             ->width(440)
                             ->height(440)
@@ -138,6 +145,16 @@ trait Upload
                             ->height(880)
                             ->format(Manipulations::FORMAT_WEBP)
                             ->save("{$filePath}sedang_{$rawName}.webp");
+                    } else {
+                        Image::load($uploadData['full_path'])
+                            ->width(440)
+                            ->height(440)
+                            ->save("{$filePath}kecil_{$rawName}.{$extension}");
+
+                        Image::load($uploadData['full_path'])
+                            ->width(880)
+                            ->height(880)
+                            ->save("{$filePath}sedang_{$rawName}.{$extension}");
                     }
 
                 }
@@ -146,11 +163,10 @@ trait Upload
                 unlink($uploadData['full_path']);
 
                 if ($gambar === 'gambar') {
-
                     return "{$rawName}.png";
                 }
 
-                    return "{$rawName}.webp";
+                return opensid_support_webp() ? "{$rawName}.webp" : "{$rawName}.{$extension}";
 
             }
         );
@@ -224,6 +240,8 @@ trait Upload
 
                 if ($ext === 'gif') {
                     $new_ext = 'gif';
+                } elseif ($ext === 'webp' && ! opensid_support_webp()) {
+                    $new_ext = 'webp';
                 } else {
                     if ($size) {
                         $image = Image::load($fullPath);
@@ -242,7 +260,7 @@ trait Upload
                         copyFavicon();
                     }
 
-                    if ($webp) {
+                    if ($webp && opensid_support_webp()) {
                         Image::load($fullPath)->format(Manipulations::FORMAT_WEBP)->save("{$filePath}{$rawName}.webp");
 
                         unlink($fullPath);
@@ -279,7 +297,8 @@ trait Upload
             $nama_file = (new Checker(get_app_key(), $nama_file))->encrypt();
             $nama_file = $this->uploadFoto($nama_file, $old_foto, $dimensi, $lokasi);
         } elseif ($foto) {
-            $nama_file .= '.webp';
+            $targetExtension = opensid_support_webp() ? 'webp' : 'png';
+            $nama_file .= ".{$targetExtension}";
             $foto = str_replace('data:image/png;base64,', '', $foto);
             $foto = base64_decode($foto, true);
 
@@ -306,14 +325,14 @@ trait Upload
             $nama_file = (new Checker(get_app_key(), $nama_file))->encrypt();
 
             Image::load($tempPng)
-                ->format(Manipulations::FORMAT_WEBP)
+                ->format(opensid_support_webp() ? Manipulations::FORMAT_WEBP : Manipulations::FORMAT_PNG)
                 ->width(500) // Atur sesuai kebutuhan
                 ->height(500)
                 ->save($lokasi . $nama_file);
 
             // Buat thumbnail kecil
             Image::load($tempPng)
-                ->format(Manipulations::FORMAT_WEBP)
+                ->format(opensid_support_webp() ? Manipulations::FORMAT_WEBP : Manipulations::FORMAT_PNG)
                 ->width(100)
                 ->height(100)
                 ->save($lokasi . 'kecil_' . $nama_file);
@@ -352,17 +371,27 @@ trait Upload
                     unlink($filePath . $old_foto);
                 }
 
+                if ($extension === 'webp' && ! opensid_support_webp()) {
+                    return "{$rawName}.webp";
+                }
+
                 $dimensi = generateDimensi($dimensi);
 
-                Image::load($uploadData['full_path'])
-                    ->format(Manipulations::FORMAT_WEBP)
+                $targetExtension = opensid_support_webp() ? 'webp' : $extension;
+
+                $image = Image::load($uploadData['full_path'])
                     ->width($dimensi['width'])
-                    ->height($dimensi['height'])
-                    ->save("{$filePath}{$rawName}.webp");
+                    ->height($dimensi['height']);
+
+                if (opensid_support_webp()) {
+                    $image->format(Manipulations::FORMAT_WEBP);
+                }
+
+                $image->save("{$filePath}{$rawName}.{$targetExtension}");
 
                 unlink($uploadData['full_path']);
 
-                return "{$rawName}.webp";
+                return "{$rawName}.{$targetExtension}";
             }
         );
     }

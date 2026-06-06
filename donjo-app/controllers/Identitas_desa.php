@@ -41,8 +41,6 @@ use App\Models\ProfilDesa;
 use App\Models\Wilayah;
 use App\Traits\Upload;
 use Illuminate\Support\Facades\Schema;
-use Spatie\Image\Image;
-use Spatie\Image\Manipulations;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -136,55 +134,68 @@ class Identitas_desa extends Admin_Controller
     {
         isCan('u');
 
-        $id       = $this->identitas_desa['id'];
-        $config   = Config::find($id);
-        $validate = $this->validate($this->request, $config);
-        $cek      = $this->cek_kode_wilayah($validate);
+        try {
+            $id       = $this->identitas_desa['id'];
+            $config   = Config::find($id);
+            $validate = $this->validate($this->request, $config);
+            $cek      = $this->cek_kode_wilayah($validate);
 
-        if ($cek['status'] && $config->update($validate)) {
-            if (Schema::hasTable('profil_desa')) {
-                $dataProfil = array_intersect_key($this->request, array_flip([
-                    'jenis_tanah',
-                    'topografi',
-                    'sumber_daya_alam',
-                    'flora_fauna',
-                    'rawan_bencana',
-                    'kearifan_lokal',
-                    'jenis_jaringan',
-                    'provider_internet',
-                    'cakupan_wilayah',
-                    'kecepatan_internet',
-                    'akses_publik',
-                    'status_desa',
-                    'lembaga_adat',
-                    'struktur_adat',
-                    'wilayah_adat',
-                    'peraturan_adat',
-                    'regulasi_penetapan_kampung_adat',
-                    'dokumen_regulasi_penetapan_kampung_adat',
-                ]));
-
-                $oldProfil = ProfilDesa::whereIn('key', ['dokumen_regulasi_penetapan_kampung_adat', 'struktur_adat'])
-                    ->pluck('value', 'key')
-                    ->toArray();
-
-                $dataProfil['dokumen_regulasi_penetapan_kampung_adat'] = $this->upload_dokumen(
-                    'dokumen_regulasi_penetapan_kampung_adat',
-                    $oldProfil['dokumen_regulasi_penetapan_kampung_adat']
-                );
-
-                $dataProfil['struktur_adat'] = $this->upload_dokumen(
-                    'struktur_adat',
-                    $oldProfil['struktur_adat']
-                );
-
-                ProfilDesa::simpanData($dataProfil, $config->id);
+            if (! $cek['status']) {
+                return json(['status' => false, 'message' => $cek['message'] ?? 'Kode wilayah tidak valid.']);
             }
 
-            return json(['status' => true]);
-        }
+            if ($config->update($validate)) {
+                if (Schema::hasTable('profil_desa')) {
+                    $dataProfil = array_intersect_key($this->request, array_flip([
+                        'jenis_tanah',
+                        'topografi',
+                        'sumber_daya_alam',
+                        'flora_fauna',
+                        'rawan_bencana',
+                        'kearifan_lokal',
+                        'jenis_jaringan',
+                        'provider_internet',
+                        'cakupan_wilayah',
+                        'kecepatan_internet',
+                        'akses_publik',
+                        'status_desa',
+                        'lembaga_adat',
+                        'struktur_adat',
+                        'wilayah_adat',
+                        'peraturan_adat',
+                        'regulasi_penetapan_kampung_adat',
+                        'dokumen_regulasi_penetapan_kampung_adat',
+                    ]));
 
-        return json(['status' => false, 'message' => $cek['message']]);
+                    $oldProfil = ProfilDesa::whereIn('key', ['dokumen_regulasi_penetapan_kampung_adat', 'struktur_adat'])
+                        ->pluck('value', 'key')
+                        ->toArray();
+
+                    $dataProfil['dokumen_regulasi_penetapan_kampung_adat'] = $this->upload_dokumen(
+                        'dokumen_regulasi_penetapan_kampung_adat',
+                        $oldProfil['dokumen_regulasi_penetapan_kampung_adat'] ?? null
+                    );
+
+                    $dataProfil['struktur_adat'] = $this->upload_dokumen(
+                        'struktur_adat',
+                        $oldProfil['struktur_adat'] ?? null
+                    );
+
+                    ProfilDesa::simpanData($dataProfil, $config->id);
+                }
+
+                return json(['status' => true]);
+            }
+
+            return json(['status' => false, 'message' => 'Data identitas desa tidak berubah atau gagal disimpan.']);
+        } catch (Throwable $e) {
+            logger()->error($e);
+
+            return json([
+                'status'  => false,
+                'message' => 'Gagal menyimpan identitas desa: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -265,7 +276,7 @@ class Identitas_desa extends Admin_Controller
                 ? $this->uploadGambar('logo', LOKASI_LOGO_DESA, $request['ukuran'], false, true)
                 : $old->logo,
             'kantor_desa' => (! empty($_FILES['kantor_desa']['name']))
-                ? $this->uploadGambar('kantor_desa', LOKASI_LOGO_DESA)
+                ? $this->uploadGambar('kantor_desa', LOKASI_LOGO_DESA, null, false)
                 : $old->kantor_desa,
             'nama_desa'         => nama_desa($request['nama_desa']),
             'kode_desa'         => substr((string) bilangan($request['kode_desa']), 0, 10),
@@ -328,21 +339,8 @@ class Identitas_desa extends Admin_Controller
                 'max_size'      => 2048, // 2 MB
                 'overwrite'     => true,
             ],
-            callback: static function ($uploadData) use ($isImage, $oldFile) {
-                $newFilename = '';
-
-                if ($isImage) {
-                    // Konversi ke .webp
-                    $newFilename = "{$uploadData['raw_name']}.webp";
-                    Image::load($uploadData['full_path'])
-                        ->format(Manipulations::FORMAT_WEBP)
-                        ->save("{$uploadData['file_path']}{$newFilename}");
-
-                    // Hapus file asli (non-webp)
-                    @unlink($uploadData['full_path']);
-                } else {
-                    $newFilename = $uploadData['file_name'];
-                }
+            callback: static function ($uploadData) use ($oldFile) {
+                $newFilename = $uploadData['file_name'];
 
                 // Hapus file lama (jika ada dan berbeda dari file baru)
                 if (! empty($oldFile)) {

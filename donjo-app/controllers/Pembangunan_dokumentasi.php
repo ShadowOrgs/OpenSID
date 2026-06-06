@@ -231,6 +231,10 @@ class Pembangunan_dokumentasi extends Admin_Controller
             ],
             redirectUrl: ci_route('pembangunan_dokumentasi.dokumentasi', $id),
             callback: static function ($uploadData) {
+                if (! opensid_support_webp()) {
+                    return $uploadData['file_name'];
+                }
+
                 Image::load($uploadData['full_path'])
                     ->format(Manipulations::FORMAT_WEBP)
                     ->save("{$uploadData['file_path']}{$uploadData['raw_name']}.webp");

@@ -17,6 +17,7 @@ use App\Models\PermohonanSurat;
 use App\Models\PesanMandiri;
 use App\Models\SinergiProgram;
 use App\Models\SyaratSurat;
+use App\Models\TeksBerjalan;
 use App\Enums\KategoriPublicEnum;
 use App\Enums\JawabanKepuasanEnum;
 use Modules\Lapak\Models\Produk as LapakProduk;
@@ -170,9 +171,11 @@ class Mandiri extends Api_Controller
 
         $this->ok([
             'data' => [
-                'desa'  => $this->desaPayload(),
-                'user'  => $this->userPayload($user),
-                'menus' => [
+                'desa'          => $this->desaPayload(),
+                'user'          => $this->userPayload($user),
+                'slider'        => $this->dashboardSliderPayload(),
+                'teks_berjalan' => $this->runningTextPayload(),
+                'menus'         => [
                     ['key' => 'surat', 'label' => 'Surat', 'icon' => 'file-text'],
                     ['key' => 'pesan', 'label' => 'Pesan', 'icon' => 'mail'],
                     ['key' => 'lapak', 'label' => 'Lapak', 'icon' => 'shopping-cart'],
@@ -528,7 +531,7 @@ class Mandiri extends Api_Controller
                     'jabatan_kontak'  => $desa->jabatan_kontak,
                     'lat'             => $lat,
                     'lng'             => $lng,
-                    'logo_url'        => gambar_desa($desa->logo),
+                    'logo_url'        => $this->desaLogoUrl($desa->logo),
                     'map_url'         => $query ? 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($query) : null,
                     'static_map_url'  => $lat !== null && $lng !== null ? "https://staticmap.openstreetmap.de/staticmap.php?center={$lat},{$lng}&zoom=15&size=640x360&markers={$lat},{$lng},red-pushpin" : null,
                 ],
@@ -878,6 +881,37 @@ class Mandiri extends Api_Controller
                 'items' => $items,
             ],
         ]);
+    }
+
+    public function documentFile($id): void
+    {
+        $user = $this->requireMobileAuth();
+
+        $dokumen = DokumenHidup::query()
+            ->where('id_pend', $user->id_pend)
+            ->where('enabled', DokumenHidup::ENABLE)
+            ->find($id);
+
+        if (! $dokumen || blank($dokumen->satuan)) {
+            $this->fail('Dokumen tidak ditemukan.', ['id' => ['Dokumen tidak ditemukan.']], 404);
+        }
+
+        $path = FCPATH . LOKASI_DOKUMEN . $dokumen->satuan;
+
+        if (! is_file($path)) {
+            $this->fail('File dokumen tidak ditemukan.', ['file' => ['File dokumen tidak ditemukan di server.']], 404);
+        }
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        $mime = mime_content_type($path) ?: 'application/octet-stream';
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . filesize($path));
+        header('Content-Disposition: inline; filename="' . basename($dokumen->satuan) . '"');
+        readfile($path);
+        exit;
     }
 
     public function uploadDocument(): void
@@ -1333,8 +1367,48 @@ class Mandiri extends Api_Controller
             'kode_desa' => $desa->kode_desa,
             'kecamatan' => $desa->nama_kecamatan,
             'kabupaten' => $desa->nama_kabupaten,
-            'logo_url'  => gambar_desa($desa->logo),
+            'logo_url'  => $this->desaLogoUrl($desa->logo),
         ];
+    }
+
+    private function dashboardSliderPayload(): array
+    {
+        $limit = (int) (setting('jumlah_gambar_slider') ?? 10);
+
+        return Artikel::query()
+            ->select(['id', 'judul', 'gambar', 'slug', 'tgl_upload'])
+            ->where('enabled', 1)
+            ->where('tgl_upload', '<', Carbon::now())
+            ->whereNotNull('gambar')
+            ->where('gambar', '!=', '')
+            ->latest('tgl_upload')
+            ->limit($limit > 0 ? $limit : 10)
+            ->get()
+            ->map(fn (Artikel $artikel): array => [
+                'id'         => $artikel->id,
+                'judul'      => $artikel->judul,
+                'gambar_url' => $this->imageUrl(LOKASI_FOTO_ARTIKEL, $artikel->gambar),
+                'url'        => $this->assetUrl('artikel/' . ($artikel->slug ?: $artikel->id)),
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function runningTextPayload(): array
+    {
+        return TeksBerjalan::query()
+            ->status(1)
+            ->orderBy('urut')
+            ->get()
+            ->map(static fn (TeksBerjalan $item): array => [
+                'id'           => $item->id,
+                'teks'         => trim((string) $item->teks),
+                'tautan'       => $item->tautan,
+                'judul_tautan' => $item->judul_tautan,
+            ])
+            ->filter(static fn (array $item): bool => filled($item['teks']))
+            ->values()
+            ->all();
     }
 
     private function suratTypePayload(FormatSurat $surat, bool $withFields = false): array
@@ -1481,12 +1555,15 @@ class Mandiri extends Api_Controller
 
     private function documentPayload(DokumenHidup $dokumen): array
     {
+        $token = $this->bearerToken();
+
         return [
             'id'          => $dokumen->id,
             'nama'        => $dokumen->nama,
             'id_syarat'   => $dokumen->id_syarat,
             'nama_syarat' => SyaratSurat::find($dokumen->id_syarat)?->ref_syarat_nama,
             'file_name'   => $dokumen->satuan,
+            'file_url'    => $dokumen->satuan ? $this->mobileUrl('documents/' . $dokumen->id . '/file') . ($token ? '?token=' . rawurlencode($token) : '') : null,
             'uploaded_at' => $dokumen->tgl_upload ? Carbon::parse($dokumen->tgl_upload)->toIso8601String() : null,
         ];
     }
@@ -1636,11 +1713,50 @@ class Mandiri extends Api_Controller
 
         foreach (['sedang_', 'kecil_', ''] as $prefix) {
             if (is_file(FCPATH . $directory . $prefix . $filename)) {
-                return site_url($directory . $prefix . $filename);
+                return $this->assetUrl($directory . $prefix . $filename);
             }
         }
 
-        return site_url($directory . $filename);
+        return $this->assetUrl($directory . $filename);
+    }
+
+    private function desaLogoUrl(?string $filename): string
+    {
+        if (filled($filename) && is_file(FCPATH . LOKASI_LOGO_DESA . $filename)) {
+            return $this->assetUrl(LOKASI_LOGO_DESA . $filename);
+        }
+
+        return $this->assetUrl('assets/files/logo/opensid_logo.png');
+    }
+
+    private function assetUrl(string $path): string
+    {
+        $host = $this->input->server('HTTP_HOST');
+
+        if ($host) {
+            $scheme = $this->input->server('HTTP_X_FORWARDED_PROTO')
+                ?: $this->input->server('REQUEST_SCHEME')
+                ?: 'http';
+
+            return rtrim($scheme . '://' . $host, '/') . '/' . ltrim($path, '/');
+        }
+
+        return site_url($path);
+    }
+
+    private function mobileUrl(string $path): string
+    {
+        $host = $this->input->server('HTTP_HOST');
+
+        if ($host) {
+            $scheme = $this->input->server('HTTP_X_FORWARDED_PROTO')
+                ?: $this->input->server('REQUEST_SCHEME')
+                ?: 'http';
+
+            return rtrim($scheme . '://' . $host, '/') . '/api/mobile/v1/' . ltrim($path, '/');
+        }
+
+        return site_url('api/mobile/v1/' . ltrim($path, '/'));
     }
 
     private function plainText(?string $html, ?int $limit = null): string

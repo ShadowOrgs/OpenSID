@@ -1,9 +1,9 @@
 import { AuthProvider, useAuth } from '@/auth/AuthProvider';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, AppState, View } from 'react-native';
 
 function RootNavigator() {
   const { user, isLoading } = useAuth();
@@ -24,7 +24,24 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 0,
+        refetchOnMount: 'always',
+        refetchOnReconnect: true,
+        refetchOnWindowFocus: true,
+      },
+    },
+  }));
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (status) => {
+      focusManager.setFocused(status === 'active');
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

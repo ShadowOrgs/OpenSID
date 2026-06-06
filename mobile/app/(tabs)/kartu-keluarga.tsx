@@ -1,21 +1,50 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { getFamily, getPrintUrl, type FamilyMember } from '@/api/services';
+import { AppButton } from '@/components/AppButton';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 type Family = Awaited<ReturnType<typeof getFamily>>['data']['keluarga'];
 
 export default function KartuKeluargaScreen() {
   const [family, setFamily] = useState<Family | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    getFamily()
-      .then((response) => setFamily(response.data.keluarga))
-      .catch((error) => setMessage(error instanceof Error ? error.message : 'Data KK gagal dimuat.'))
-      .finally(() => setLoading(false));
-  }, []);
+  async function loadData() {
+    const response = await getFamily();
+    setFamily(response.data.keluarga);
+  }
+
+  useRefreshOnFocus(async (isInitial) => {
+    if (isInitial) {
+      setLoading(true);
+    }
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Data KK gagal dimuat.');
+    } finally {
+      if (isInitial) {
+        setLoading(false);
+      }
+    }
+  });
+
+  async function onRefresh() {
+    setRefreshing(true);
+    setMessage(null);
+    try {
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Data KK gagal dimuat.');
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   async function openPdf() {
     const url = await getPrintUrl('kk');
@@ -23,12 +52,10 @@ export default function KartuKeluargaScreen() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Text style={styles.title}>Kartu Keluarga</Text>
       {message ? <Text style={styles.notice}>{message}</Text> : null}
-      <Pressable style={styles.printButton} onPress={openPdf}>
-        <Text style={styles.printButtonText}>Cetak Salinan KK PDF</Text>
-      </Pressable>
+      <AppButton label="Cetak Salinan KK PDF" icon="print" onPress={openPdf} />
       {loading ? (
         <ActivityIndicator color="#0088a8" />
       ) : family ? (
@@ -61,8 +88,6 @@ const styles = StyleSheet.create({
   content: { padding: 20, gap: 12 },
   title: { fontSize: 24, fontWeight: '800', color: '#15323d' },
   notice: { borderRadius: 8, backgroundColor: '#fdecec', color: '#b42318', padding: 12, fontWeight: '700' },
-  printButton: { alignItems: 'center', borderRadius: 8, backgroundColor: '#0088a8', paddingVertical: 13 },
-  printButtonText: { color: '#fff', fontWeight: '800' },
   section: { gap: 8, borderRadius: 8, backgroundColor: '#fff', padding: 14 },
   sectionTitle: { color: '#15323d', fontSize: 16, fontWeight: '800' },
   member: { gap: 4, borderTopWidth: 1, borderTopColor: '#e2eaee', paddingTop: 10 },

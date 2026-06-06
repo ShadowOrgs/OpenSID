@@ -379,6 +379,14 @@ class Theme extends Admin_Controller
                 'overwrite'     => true,
             ],
             callback: static function ($uploadData) use ($tema, $key, $namaTema) {
+                if (! opensid_support_webp()) {
+                    if (file_exists($old = FCPATH . $tema->opsi[$key])) {
+                        unlink($old);
+                    }
+
+                    return CONFIG_THEMES . "{$namaTema}/{$uploadData['file_name']}";
+                }
+
                 Image::load($uploadData['full_path'])
                     ->format(Manipulations::FORMAT_WEBP)
                     ->save("{$uploadData['file_path']}{$uploadData['raw_name']}.webp");

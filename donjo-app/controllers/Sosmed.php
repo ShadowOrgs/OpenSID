@@ -187,6 +187,15 @@ class Sosmed extends Admin_Controller
                     'overwrite'     => true,
                 ],
                 callback: static function ($uploadData) {
+                    if (! opensid_support_webp()) {
+                        Image::load($uploadData['full_path'])
+                            ->width(100)
+                            ->height(100)
+                            ->save($uploadData['full_path']);
+
+                        return $uploadData['file_name'];
+                    }
+
                     Image::load($uploadData['full_path'])
                         ->width(100)
                         ->height(100)

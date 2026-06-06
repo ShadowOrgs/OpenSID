@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getLapak, type LapakCategory, type LapakProduct } from '@/api/services';
+import { AppButton } from '@/components/AppButton';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 export default function LapakScreen() {
   const [items, setItems] = useState<LapakProduct[]>([]);
@@ -9,10 +11,13 @@ export default function LapakScreen() {
   const [keyword, setKeyword] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function load(nextCategoryId = categoryId) {
-    setLoading(true);
+  async function load(nextCategoryId = categoryId, showLoader = true) {
+    if (showLoader) {
+      setLoading(true);
+    }
     setMessage(null);
     try {
       const response = await getLapak({ keyword, category_id: nextCategoryId });
@@ -21,28 +26,37 @@ export default function LapakScreen() {
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Data lapak gagal dimuat.');
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useRefreshOnFocus(() => {
+    void load();
+  });
 
   function selectCategory(id: number | undefined) {
     setCategoryId(id);
     load(id);
   }
 
+  async function onRefresh() {
+    setRefreshing(true);
+    try {
+      await load(categoryId, false);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Text style={styles.title}>Lapak</Text>
       {message ? <Text style={styles.notice}>{message}</Text> : null}
       <View style={styles.searchRow}>
         <TextInput value={keyword} onChangeText={setKeyword} placeholder="Cari produk" style={styles.input} placeholderTextColor="#8ba0a8" />
-        <Pressable style={styles.searchButton} onPress={() => load()}>
-          <Text style={styles.searchButtonText}>Cari</Text>
-        </Pressable>
+        <AppButton label="Cari" icon="search" compact style={styles.searchButton} onPress={() => load()} />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
         <Pressable style={[styles.chip, !categoryId && styles.chipActive]} onPress={() => selectCategory(undefined)}>
@@ -86,8 +100,7 @@ const styles = StyleSheet.create({
   notice: { borderRadius: 8, backgroundColor: '#fdecec', color: '#b42318', padding: 12, fontWeight: '700' },
   searchRow: { flexDirection: 'row', gap: 8 },
   input: { flex: 1, minHeight: 46, borderWidth: 1, borderColor: '#c7d6dd', borderRadius: 8, paddingHorizontal: 12, backgroundColor: '#fff', color: '#15323d' },
-  searchButton: { minWidth: 70, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#0088a8' },
-  searchButtonText: { color: '#fff', fontWeight: '800' },
+  searchButton: { minWidth: 88, alignSelf: 'stretch' },
   categories: { gap: 8, paddingVertical: 2 },
   chip: { borderWidth: 1, borderColor: '#c7d6dd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9, backgroundColor: '#fff' },
   chipActive: { borderColor: '#0088a8', backgroundColor: '#e5f7fb' },

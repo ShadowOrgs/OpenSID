@@ -206,6 +206,10 @@ class Sinergi_program extends Admin_Controller
                 'overwrite'     => true,
             ],
             callback: static function ($uploadData) {
+                if (! opensid_support_webp()) {
+                    return $uploadData['file_name'];
+                }
+
                 $webpPath = "{$uploadData['file_path']}{$uploadData['raw_name']}.webp";
 
                 try {

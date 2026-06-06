@@ -14,6 +14,10 @@ import {
 
 import { ApiError } from '@/api/client';
 import { getDocuments, uploadDocument, type MandiriDocument } from '@/api/documents';
+import { AppButton } from '@/components/AppButton';
+import { AppDialog } from '@/components/AppDialog';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
+import { Ionicons } from '@expo/vector-icons';
 import {
   createSuratRequest,
   getSuratRequest,
@@ -42,6 +46,7 @@ export default function SuratScreen() {
   const [uploading, setUploading] = useState<number | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<SuratRequest | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' } | null>(null);
 
   const selectedType = useMemo(() => types.find((item) => item.id === selectedId) ?? null, [selectedId, types]);
   const activeType = detail ?? selectedType;
@@ -54,11 +59,19 @@ export default function SuratScreen() {
     setSelectedId((current) => current ?? typeResponse.data.items[0]?.id ?? null);
   }, []);
 
-  useEffect(() => {
+  useRefreshOnFocus((isInitial) => {
+    if (isInitial) {
+      setLoading(true);
+    }
+    setMessage(null);
     loadData()
       .catch((error) => setMessage(error instanceof Error ? error.message : 'Data surat gagal dimuat.'))
-      .finally(() => setLoading(false));
-  }, [loadData]);
+      .finally(() => {
+        if (isInitial) {
+          setLoading(false);
+        }
+      });
+  });
 
   useEffect(() => {
     if (!selectedId) {
@@ -90,7 +103,7 @@ export default function SuratScreen() {
 
   async function submit() {
     if (!selectedId) {
-      setMessage('Pilih jenis surat terlebih dahulu.');
+      setDialog({ title: 'Perhatian', message: 'Pilih jenis surat terlebih dahulu.', variant: 'warning' });
       return;
     }
 
@@ -109,13 +122,13 @@ export default function SuratScreen() {
       setFieldValues({});
       setSyaratValues({});
       await loadData();
-      setMessage('Permohonan surat berhasil dikirim.');
+      setDialog({ title: 'Berhasil', message: 'Permohonan surat berhasil dikirim.', variant: 'success' });
     } catch (error) {
       if (error instanceof ApiError) {
         const firstError = Object.values(error.errors).flat()[0];
-        setMessage(firstError ?? error.message);
+        setDialog({ title: 'Gagal', message: firstError ?? error.message, variant: 'error' });
       } else {
-        setMessage(error instanceof Error ? error.message : 'Permohonan surat gagal dikirim.');
+        setDialog({ title: 'Gagal', message: error instanceof Error ? error.message : 'Permohonan surat gagal dikirim.', variant: 'error' });
       }
     } finally {
       setSubmitting(false);
@@ -150,13 +163,13 @@ export default function SuratScreen() {
       const documentResponse = await getDocuments();
       setDocuments(documentResponse.data.items);
       setSyaratValues((current) => ({ ...current, [String(syaratId)]: response.data.item.id }));
-      setMessage('Dokumen berhasil diunggah.');
+      setDialog({ title: 'Berhasil', message: 'Dokumen berhasil diunggah.', variant: 'success' });
     } catch (error) {
       if (error instanceof ApiError) {
         const firstError = Object.values(error.errors).flat()[0];
-        setMessage(firstError ?? error.message);
+        setDialog({ title: 'Gagal', message: firstError ?? error.message, variant: 'error' });
       } else {
-        setMessage(error instanceof Error ? error.message : 'Dokumen gagal diunggah.');
+        setDialog({ title: 'Gagal', message: error instanceof Error ? error.message : 'Dokumen gagal diunggah.', variant: 'error' });
       }
     } finally {
       setUploading(null);
@@ -244,13 +257,13 @@ export default function SuratScreen() {
                     </Text>
                   </Pressable>
                 ))}
-                <Pressable
-                  style={[styles.secondaryButton, uploading === item.id && styles.buttonDisabled]}
+                <AppButton
+                  label={uploading === item.id ? 'Mengunggah...' : 'Unggah Dokumen'}
+                  icon="cloud-upload"
+                  compact
                   onPress={() => pickAndUploadDocument(item.id, item.nama)}
-                  disabled={uploading === item.id}
-                >
-                  <Text style={styles.secondaryButtonText}>{uploading === item.id ? 'Mengunggah...' : 'Unggah Dokumen'}</Text>
-                </Pressable>
+                  loading={uploading === item.id}
+                />
               </View>
             ))}
           </View>
@@ -272,13 +285,13 @@ export default function SuratScreen() {
           style={[styles.input, styles.textArea]}
           placeholderTextColor="#8ba0a8"
         />
-        <Pressable
-          style={[styles.primaryButton, (submitting || !types.length) && styles.buttonDisabled]}
+        <AppButton
+          label={submitting ? 'Mengirim...' : 'Kirim Permohonan'}
+          icon="send"
           onPress={submit}
-          disabled={submitting || !types.length}
-        >
-          <Text style={styles.primaryButtonText}>{submitting ? 'Mengirim...' : 'Kirim Permohonan'}</Text>
-        </Pressable>
+          loading={submitting}
+          disabled={!types.length}
+        />
       </View>
 
       <View style={styles.section}>
@@ -306,8 +319,13 @@ export default function SuratScreen() {
               <>
                 <View style={styles.detailHeader}>
                   <Text style={styles.detailTitle}>{selectedRequest.nama_surat ?? 'Surat'}</Text>
-                  <Pressable style={styles.closeButton} onPress={() => setSelectedRequest(null)}>
-                    <Text style={styles.closeButtonText}>Tutup</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Tutup detail surat"
+                    style={styles.closeButton}
+                    onPress={() => setSelectedRequest(null)}
+                  >
+                    <Ionicons name="close" size={22} color="#31515e" />
                   </Pressable>
                 </View>
                 <Text style={styles.statusDetail}>{selectedRequest.status_label}</Text>
@@ -337,6 +355,13 @@ export default function SuratScreen() {
           </View>
         </View>
       </Modal>
+      <AppDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ''}
+        message={dialog?.message ?? ''}
+        variant={dialog?.variant}
+        onClose={() => setDialog(null)}
+      />
     </ScrollView>
   );
 }
@@ -533,11 +558,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   textArea: { minHeight: 92, paddingTop: 12, textAlignVertical: 'top' },
-  primaryButton: { alignItems: 'center', borderRadius: 8, backgroundColor: '#00945f', paddingVertical: 13 },
-  secondaryButton: { alignItems: 'center', borderWidth: 1, borderColor: '#008aa6', borderRadius: 8, paddingVertical: 10 },
   buttonDisabled: { opacity: 0.55 },
-  primaryButtonText: { color: '#ffffff', fontWeight: '800' },
-  secondaryButtonText: { color: '#006f86', fontWeight: '800' },
   empty: { color: '#55727e' },
   requestItem: { gap: 8, borderTopWidth: 1, borderTopColor: '#e2eaee', paddingTop: 12 },
   requestHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
@@ -549,8 +570,16 @@ const styles = StyleSheet.create({
   detailSheet: { maxHeight: '78%', gap: 10, borderTopLeftRadius: 8, borderTopRightRadius: 8, backgroundColor: '#ffffff', padding: 16 },
   detailHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
   detailTitle: { flex: 1, color: '#15323d', fontSize: 18, fontWeight: '800' },
-  closeButton: { borderRadius: 8, backgroundColor: '#eef4f7', paddingHorizontal: 12, paddingVertical: 8 },
-  closeButtonText: { color: '#31515e', fontWeight: '800' },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eef4f7',
+    borderWidth: 1,
+    borderColor: '#dce8ee',
+  },
   statusDetail: { alignSelf: 'flex-start', borderRadius: 6, backgroundColor: '#e5f7fb', color: '#006f86', paddingHorizontal: 8, paddingVertical: 5, fontWeight: '800' },
   detailBody: { maxHeight: 420 },
   detailGroup: { marginTop: 12 },

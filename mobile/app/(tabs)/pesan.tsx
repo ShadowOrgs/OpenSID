@@ -13,6 +13,10 @@ import {
 
 import { ApiError } from '@/api/client';
 import { getMessageDetail, getMessages, sendMessage, type MandiriMessage, type MessageBox } from '@/api/pesan';
+import { AppButton } from '@/components/AppButton';
+import { AppDialog } from '@/components/AppDialog';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function PesanScreen() {
   const [box, setBox] = useState<MessageBox>('masuk');
@@ -25,6 +29,7 @@ export default function PesanScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<MandiriMessage | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
 
   const loadMessages = useCallback(async (targetBox: MessageBox = box) => {
     const response = await getMessages(targetBox);
@@ -38,6 +43,15 @@ export default function PesanScreen() {
       .catch((error) => setNotice(error instanceof Error ? error.message : 'Pesan gagal dimuat.'))
       .finally(() => setLoading(false));
   }, [box, loadMessages]);
+
+  useRefreshOnFocus((isInitial) => {
+    if (isInitial) {
+      return;
+    }
+
+    setNotice(null);
+    loadMessages().catch((error) => setNotice(error instanceof Error ? error.message : 'Pesan gagal dimuat.'));
+  });
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -61,13 +75,13 @@ export default function PesanScreen() {
       setBody('');
       setBox('keluar');
       await loadMessages('keluar');
-      setNotice('Pesan berhasil dikirim.');
+      setDialog({ title: 'Berhasil', message: 'Pesan berhasil dikirim.', variant: 'success' });
     } catch (error) {
       if (error instanceof ApiError) {
         const firstError = Object.values(error.errors).flat()[0];
-        setNotice(firstError ?? error.message);
+        setDialog({ title: 'Gagal', message: firstError ?? error.message, variant: 'error' });
       } else {
-        setNotice(error instanceof Error ? error.message : 'Pesan gagal dikirim.');
+        setDialog({ title: 'Gagal', message: error instanceof Error ? error.message : 'Pesan gagal dikirim.', variant: 'error' });
       }
     } finally {
       setSubmitting(false);
@@ -119,9 +133,7 @@ export default function PesanScreen() {
           style={[styles.input, styles.textArea]}
           placeholderTextColor="#8ba0a8"
         />
-        <Pressable style={[styles.primaryButton, submitting && styles.buttonDisabled]} onPress={submit} disabled={submitting}>
-          <Text style={styles.primaryButtonText}>{submitting ? 'Mengirim...' : 'Kirim Pesan'}</Text>
-        </Pressable>
+        <AppButton label={submitting ? 'Mengirim...' : 'Kirim Pesan'} icon="send" onPress={submit} loading={submitting} />
       </View>
 
       <View style={styles.tabs}>
@@ -160,8 +172,13 @@ export default function PesanScreen() {
               <>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>{selectedMessage.subjek || 'Tanpa subjek'}</Text>
-                  <Pressable style={styles.closeButton} onPress={() => setSelectedMessage(null)}>
-                    <Text style={styles.closeButtonText}>Tutup</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Tutup detail pesan"
+                    style={styles.closeButton}
+                    onPress={() => setSelectedMessage(null)}
+                  >
+                    <Ionicons name="close" size={22} color="#31515e" />
                   </Pressable>
                 </View>
                 <Text style={styles.messageMeta}>{formatDate(selectedMessage.tgl_upload ?? selectedMessage.created_at)}</Text>
@@ -177,6 +194,13 @@ export default function PesanScreen() {
           </View>
         </View>
       </Modal>
+      <AppDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ''}
+        message={dialog?.message ?? ''}
+        variant={dialog?.variant}
+        onClose={() => setDialog(null)}
+      />
     </ScrollView>
   );
 }
@@ -215,12 +239,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   textArea: { minHeight: 100, paddingTop: 12, textAlignVertical: 'top' },
-  primaryButton: { alignItems: 'center', borderRadius: 8, backgroundColor: '#00945f', paddingVertical: 13 },
   buttonDisabled: { opacity: 0.55 },
-  primaryButtonText: { color: '#ffffff', fontWeight: '800' },
   tabs: { flexDirection: 'row', gap: 8 },
   tab: { flex: 1, alignItems: 'center', borderRadius: 8, backgroundColor: '#dce8ee', paddingVertical: 11 },
-  tabActive: { backgroundColor: '#008aa6' },
+  tabActive: { backgroundColor: '#0073b7' },
   tabText: { color: '#415d68', fontWeight: '800' },
   tabTextActive: { color: '#ffffff' },
   empty: { color: '#55727e' },
@@ -234,8 +256,16 @@ const styles = StyleSheet.create({
   modalSheet: { maxHeight: '78%', gap: 10, borderTopLeftRadius: 8, borderTopRightRadius: 8, backgroundColor: '#ffffff', padding: 16 },
   modalHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
   modalTitle: { flex: 1, color: '#15323d', fontSize: 18, fontWeight: '800' },
-  closeButton: { borderRadius: 8, backgroundColor: '#eef4f7', paddingHorizontal: 12, paddingVertical: 8 },
-  closeButtonText: { color: '#31515e', fontWeight: '800' },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eef4f7',
+    borderWidth: 1,
+    borderColor: '#dce8ee',
+  },
   detailBody: { maxHeight: 420 },
   detailText: { color: '#31515e', fontSize: 15, lineHeight: 22 },
 });

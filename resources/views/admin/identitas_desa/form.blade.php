@@ -206,15 +206,20 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Gagal Ubah Data',
-                                text: response.message,
+                                text: response.message || response.error || 'Terjadi kesalahan saat menyimpan data.',
                             })
                         }
                     })
                     .fail(function(response) {
+                        const errorMessage = response.responseJSON?.message ||
+                            response.responseJSON?.error ||
+                            response.responseText ||
+                            'Terjadi kesalahan saat menyimpan data.';
+
                         Swal.fire({
                             icon: 'error',
                             title: 'Gagal Ubah Data',
-                            text: response.message,
+                            text: errorMessage,
                         })
                     });
             });

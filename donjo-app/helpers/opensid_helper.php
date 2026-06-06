@@ -234,6 +234,13 @@ function gambar_desa(?string $nama_file = null, $type = false, $file = false): s
     return ($file ? FCPATH : base_url()) . "assets/files/logo/{$default}";
 }
 
+if (! function_exists('opensid_support_webp')) {
+    function opensid_support_webp(): bool
+    {
+        return function_exists('imagewebp');
+    }
+}
+
 function session_error($pesan = ''): void
 {
     // $_SESSION['error_msg'] = $pesan;

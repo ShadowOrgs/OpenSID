@@ -6,6 +6,17 @@ type Envelope<T> = {
   data: T;
 };
 
+export type MobileHealth = {
+  desa: {
+    nama: string;
+    kode_desa: string;
+    kecamatan: string;
+    kabupaten: string;
+    logo_url: string | null;
+  };
+  time: string;
+};
+
 export type LoginPayload = {
   nik: string;
   password: string;
@@ -58,4 +69,8 @@ export async function logout() {
 
 export async function me() {
   return apiRequest<Envelope<{ user: MandiriUser }>>('/auth/me');
+}
+
+export async function getMobileHealth() {
+  return apiRequest<Envelope<MobileHealth>>('/health', { auth: false });
 }
