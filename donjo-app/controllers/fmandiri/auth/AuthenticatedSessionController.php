@@ -117,11 +117,7 @@ class AuthenticatedSessionController extends Web_Controller
         if ($request->has('nik') || ($request->has('tag_id_card') && $request->has('password'))) {
             // Login menggunakan NIK atau E-KTP dan password
             $this->authenticate([
-                'query' => fn ($q) => $q->when(
-                    $this->caseQueryExist($request),
-                    static fn ($q) => $q->status(0),
-                    static fn ($q) => $q->status(1)
-                ),
+                'query' => static fn ($q) => $q->status(1),
             ]);
 
             if (Hash::needsRehash(Auth::guard($this->guard)->user()->getAuthPassword())) {
@@ -171,11 +167,7 @@ class AuthenticatedSessionController extends Web_Controller
 
         $user = PendudukMandiri::query()
             ->whereRelation('penduduk', 'tag_id_card', $request->tag_id_card)
-            ->when(
-                $this->caseQueryExist($request),
-                static fn ($q) => $q->status(0),
-                static fn ($q) => $q->status(1)
-            )
+            ->status(1)
             ->first();
 
         if (! $user) {
@@ -235,26 +227,4 @@ class AuthenticatedSessionController extends Web_Controller
         return Str::transliterate($key . '|' . request()->ip());
     }
 
-    /**
-     * Query untuk memeriksa pendaftaran yang belum melakukan verifikasi,
-     * pendaftar akan tetap bisa login meskipun belum aktif
-     * untuk melakukan verifikasi.
-     */
-    protected function caseQueryExist(Request $request): bool
-    {
-        return PendudukMandiri::query()
-            ->when(
-                $request->nik,
-                static fn ($query) => $query->whereRelation('penduduk', 'nik', $request->nik),
-                static fn ($query) => $query->whereRelation('penduduk', 'tag_id_card', $request->tag_id_card)
-            )
-            ->whereNotNull('scan_ktp')
-            ->whereNotNull('scan_kk')
-            ->whereNotNull('foto_selfie')
-            ->whereHas('penduduk', static function ($query) {
-                $query->whereNull('email_tgl_verifikasi')
-                    ->orWhereNull('telegram_tgl_verifikasi');
-            })
-            ->exists();
-    }
 }

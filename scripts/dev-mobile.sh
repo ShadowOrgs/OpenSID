@@ -27,6 +27,7 @@ Environment override:
   WEB_PORT=${WEB_PORT}
   EXPO_PORT=${EXPO_PORT}
   DEV_API_HOST=<ip-or-host>
+  EXPO_DEV_HOST=<ip-or-host>
 USAGE
 }
 
@@ -134,6 +135,25 @@ wait_for_web() {
   exit 1
 }
 
+ensure_lan_web_access() {
+  local api_host="$1"
+  local url="http://${api_host}:${WEB_PORT}/"
+
+  if curl -fsS "$url" >/dev/null 2>&1; then
+    return
+  fi
+
+  echo "OpenSID belum bisa diakses dari LAN: $url"
+  echo "Recreate container web agar port ${WEB_PORT} listen di 0.0.0.0..."
+  WEB_BIND_IP=0.0.0.0 RECREATE_WEB=1 "$ROOT_DIR/scripts/dev-setup.sh"
+
+  if ! curl -fsS "$url" >/dev/null 2>&1; then
+    echo "Masih belum bisa akses $url dari laptop." >&2
+    echo "Cek firewall atau pastikan HP dan laptop satu jaringan." >&2
+    exit 1
+  fi
+}
+
 write_mobile_env() {
   local api_url="$1"
   mkdir -p "$MOBILE_DIR"
@@ -164,6 +184,26 @@ setup_usb_reverse() {
   echo "ADB reverse aktif: ${WEB_PORT} dan ${EXPO_PORT}"
 }
 
+urlencode() {
+  node -e "process.stdout.write(encodeURIComponent(process.argv[1]))" "$1"
+}
+
+dev_client_scheme() {
+  node <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const app = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'app.json'), 'utf8')).expo || {};
+if (typeof app.scheme === 'string' && app.scheme.length > 0) {
+  console.log(app.scheme);
+  process.exit(0);
+}
+const slug = String(app.slug || 'opensid-mobile')
+  .replace(/[^A-Za-z0-9+\-.]/g, '')
+  .toLowerCase();
+console.log(`exp+${slug || 'opensid-mobile'}`);
+NODE
+}
+
 main() {
   require_cmd docker
   require_cmd curl
@@ -173,19 +213,23 @@ main() {
   start_container_if_exists "$WEB_CONTAINER"
   wait_for_web
 
-  local api_host api_url expo_host
+  local api_host api_url expo_host_arg packager_host
   if [[ "$MODE" == "usb" ]]; then
     setup_usb_reverse
     api_host="127.0.0.1"
-    expo_host="localhost"
+    expo_host_arg="--localhost"
+    packager_host="127.0.0.1"
   else
     api_host="$(detect_lan_ip)"
-    expo_host="lan"
+    expo_host_arg="--lan"
 
     if [[ -z "$api_host" ]]; then
       echo "Gagal mendeteksi IP LAN. Jalankan dengan DEV_API_HOST=<ip-laptop>." >&2
       exit 1
     fi
+
+    ensure_lan_web_access "$api_host"
+    packager_host="${EXPO_DEV_HOST:-$api_host}"
   fi
 
   api_url="http://${api_host}:${WEB_PORT}${API_PATH}"
@@ -196,8 +240,19 @@ main() {
   fi
 
   echo "Start Expo dev client di port ${EXPO_PORT}..."
+  echo "Expo host: ${packager_host}:${EXPO_PORT}"
   cd "$MOBILE_DIR"
-  npx expo start --dev-client --host "$expo_host" --port "$EXPO_PORT"
+
+  local manifest_url dev_url scheme
+  manifest_url="http://${packager_host}:${EXPO_PORT}"
+  scheme="$(dev_client_scheme)"
+  dev_url="${scheme}://expo-development-client/?url=$(urlencode "$manifest_url")"
+
+  echo "Jika Expo tetap menulis localhost, pakai URL ini di HP/dev client:"
+  echo "$dev_url"
+  echo "Atau buka dev client lalu Enter URL: $manifest_url"
+
+  REACT_NATIVE_PACKAGER_HOSTNAME="$packager_host" npx expo start --dev-client "$expo_host_arg" --port "$EXPO_PORT"
 }
 
 main

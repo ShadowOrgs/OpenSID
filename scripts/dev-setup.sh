@@ -14,6 +14,7 @@ DB_PASSWORD="${DB_PASSWORD:-opensidpass}"
 DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-rootpass}"
 DB_PORT="${DB_PORT:-3307}"
 WEB_PORT="${WEB_PORT:-8081}"
+WEB_BIND_IP="${WEB_BIND_IP:-0.0.0.0}"
 RESET_DB=0
 
 usage() {
@@ -35,6 +36,7 @@ Environment override:
   WEB_CONTAINER=${WEB_CONTAINER}
   DB_CONTAINER=${DB_CONTAINER}
   WEB_PORT=${WEB_PORT}
+  WEB_BIND_IP=${WEB_BIND_IP}
   DB_PORT=${DB_PORT}
 USAGE
 }
@@ -289,6 +291,25 @@ ensure_web_container() {
   local router='printf "%s\n" "<?php" "\$path = parse_url(\$_SERVER[\"REQUEST_URI\"], PHP_URL_PATH);" "\$file = \"/app\" . \$path;" "if (\$path !== \"/\" && is_file(\$file)) { return false; }" "require \"/app/index.php\";" > /tmp/opensid-router.php && php -S 0.0.0.0:8080 -t /app /tmp/opensid-router.php'
 
   if container_exists "$WEB_CONTAINER"; then
+    local current_binding
+    current_binding="$(docker inspect "$WEB_CONTAINER" --format '{{range $containerPort, $bindings := .HostConfig.PortBindings}}{{range $bindings}}{{.HostIp}}:{{.HostPort}}{{end}}{{end}}' 2>/dev/null || true)"
+
+    if [[ "${RECREATE_WEB:-0}" == "1" ]] || { [[ "$WEB_BIND_IP" != "127.0.0.1" ]] && [[ "$current_binding" == 127.0.0.1:* ]]; }; then
+      echo "Recreate container $WEB_CONTAINER agar bisa diakses dari LAN..."
+      docker rm -f "$WEB_CONTAINER" >/dev/null
+    else
+      ensure_container_network "$WEB_CONTAINER"
+      if container_running "$WEB_CONTAINER"; then
+        echo "Container $WEB_CONTAINER sudah berjalan."
+      else
+        echo "Start container $WEB_CONTAINER..."
+        docker start "$WEB_CONTAINER" >/dev/null
+      fi
+      return
+    fi
+  fi
+
+  if container_exists "$WEB_CONTAINER"; then
     ensure_container_network "$WEB_CONTAINER"
     if container_running "$WEB_CONTAINER"; then
       echo "Container $WEB_CONTAINER sudah berjalan."
@@ -303,7 +324,7 @@ ensure_web_container() {
   docker run -d \
     --name "$WEB_CONTAINER" \
     --network "$DEV_NETWORK" \
-    -p "127.0.0.1:${WEB_PORT}:8080" \
+    -p "${WEB_BIND_IP}:${WEB_PORT}:8080" \
     -v "$ROOT_DIR:/app" \
     -w /app \
     -e APP_ENV=development \
