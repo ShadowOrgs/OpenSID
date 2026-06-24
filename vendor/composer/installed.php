@@ -3,7 +3,7 @@
         'name' => 'opendesa/opensid',
         'pretty_version' => 'dev-umum',
         'version' => 'dev-umum',
-        'reference' => '8cd81d44bddfa30f91d308139317f0ba8a27b5f0',
+        'reference' => '2257d809d1984523090196242e4c3ee5443828c7',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -946,7 +946,7 @@
         'opendesa/opensid' => array(
             'pretty_version' => 'dev-umum',
             'version' => 'dev-umum',
-            'reference' => '8cd81d44bddfa30f91d308139317f0ba8a27b5f0',
+            'reference' => '2257d809d1984523090196242e4c3ee5443828c7',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -1191,8 +1191,8 @@
         'psr/log-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '3.0.0',
-                1 => '1.0|2.0|3.0',
+                0 => '1.0|2.0|3.0',
+                1 => '3.0.0',
             ),
         ),
         'psr/simple-cache' => array(
