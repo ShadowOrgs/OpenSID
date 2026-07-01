@@ -145,7 +145,7 @@
                 @endforeach
             </div>
             <div class="mod-pagination">
-                {{ $artikel->links('vendor.pagination.default') ?? '' }}
+                @include('theme::commons.page')
             </div>
         @else
             <div class="mod-empty">

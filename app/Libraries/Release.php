@@ -144,7 +144,7 @@ class Release
      */
     public function isAvailable(): bool
     {
-        return $this->fixVersioning($this->getCurrentVersion()) < $this->fixVersioning($this->getLatestVersion());
+        return false;
     }
 
     /**
