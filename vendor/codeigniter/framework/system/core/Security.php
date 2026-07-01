@@ -248,6 +248,14 @@ class CI_Security {
 
 		if ($valid !== TRUE)
 		{
+			$logFile = 'C:\wamp64\www\opensid\storage\logs\debug_csrf.log';
+			$logContent = date('Y-m-d H:i:s') . " | CSRF MISMATCH | token_name={$this->_csrf_token_name} | cookie_name={$this->_csrf_cookie_name} | POST[" . $this->_csrf_token_name . "]=" . ($_POST[$this->_csrf_token_name] ?? 'NOTSET') . " | COOKIE[" . $this->_csrf_cookie_name . "]=" . ($_COOKIE[$this->_csrf_cookie_name] ?? 'NOTSET') . " | method={$_SERVER['REQUEST_METHOD']} | uri=" . ($_SERVER['REQUEST_URI'] ?? 'N/A') . "\n";
+			$logContent .= "  ALL POST KEYS: " . json_encode(array_keys($_POST)) . "\n";
+			$logContent .= "  ALL COOKIE KEYS: " . json_encode(array_keys($_COOKIE)) . "\n";
+			$logContent .= "  HTTP_COOKIE header: " . ($_SERVER['HTTP_COOKIE'] ?? 'NONE') . "\n";
+			$logContent .= "  CONTENT_TYPE: " . ($_SERVER['CONTENT_TYPE'] ?? 'NONE') . "\n";
+			$logContent .= "  REQUEST_METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? 'NONE') . "\n";
+			file_put_contents($logFile, $logContent, FILE_APPEND);
 			$this->csrf_show_error();
 		}
 

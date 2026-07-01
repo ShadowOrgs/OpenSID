@@ -1,0 +1,20 @@
+<?php
+$db = mysqli_connect('localhost', 'root', '', 'opensid');
+$user = mysqli_query($db, "SELECT id, username, password, email, active, id_grup FROM user WHERE username='admin'");
+$u = mysqli_fetch_assoc($user);
+echo 'id=' . $u['id'] . ' | username=' . $u['username'] . PHP_EOL;
+echo 'password[0..20]=' . substr($u['password'], 0, 20) . PHP_EOL;
+echo 'is_bcrypt=' . (substr($u['password'], 0, 4) === '$2y$' ? 'YES' : 'NO') . PHP_EOL;
+echo PHP_EOL . 'If we re-hash admin123 and compare to stored:' . PHP_EOL;
+$newHash = password_hash('admin123', PASSWORD_BCRYPT);
+echo 'new hash: ' . $newHash . PHP_EOL;
+echo 'matches stored: ' . ($newHash === $u['password'] ? 'YES' : 'NO') . PHP_EOL;
+echo PHP_EOL . 'Check password_verify with admin123 on stored:' . PHP_EOL;
+echo 'matches admin123: ' . (password_verify('admin123', $u['password']) ? 'YES' : 'NO') . PHP_EOL;
+echo 'matches admin: ' . (password_verify('admin', $u['password']) ? 'YES' : 'NO') . PHP_EOL;
+echo 'matches password: ' . (password_verify('password', $u['password']) ? 'YES' : 'NO') . PHP_EOL;
+echo 'matches OpenSID: ' . (password_verify('OpenSID', $u['password']) ? 'YES' : 'NO') . PHP_EOL;
+echo 'matches admin@123: ' . (password_verify('admin@123', $u['password']) ? 'YES' : 'NO') . PHP_EOL;
+echo PHP_EOL . 'Also check the logs too:' . PHP_EOL;
+echo 'From log 1: $2y$10$SLlkQ7UgMve42pov2x42gOH3/5/3nm8x7QAvO7hLuN8gZfu4QrK1W' . PHP_EOL;
+echo 'From log 2: $2y$10$6QR2ghDa2c3xz15bMHuRJuHS07RJb9yCqIA5NWbzUXO6Jty20M3h6' . PHP_EOL;

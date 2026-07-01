@@ -273,6 +273,9 @@ class AuthenticatedSessionController extends MY_Controller
 
     public function store()
     {
+        $debugFile = 'C:\wamp64\www\opensid\storage\logs\debug_store.log';
+        file_put_contents($debugFile, date('Y-m-d H:i:s') . " | store() CALLED | session_id=" . session_id() . " | username=" . ($_POST['username'] ?? 'missing') . "\n", FILE_APPEND);
+        
         $isDemoMode      = config_item('demo_mode');
         $demoUser        = config_item('demo_user');
         $requestUsername = request('username');
@@ -287,7 +290,16 @@ class AuthenticatedSessionController extends MY_Controller
             $this->authenticate(['active' => 1]);
         }
 
-        $this->session->sess_regenerate();
+        $logFile = 'C:\wamp64\www\opensid\storage\logs\debug_login.log';
+        $logMsg = date('Y-m-d H:i:s') . " | AFTER auth attempt, BEFORE sess_regenerate | session_id=" . session_id() . " | siteman=" . var_export($_SESSION['siteman'] ?? null, true) . " | intended=" . var_export($_SESSION['intended'] ?? null, true) . " | admin_check=" . var_export(auth('admin')->check(), true) . "\n";
+        $logMsg .= date('Y-m-d H:i:s') . " | session_keys_before_regen=" . implode(',', array_keys($_SESSION ?? [])) . "\n";
+        file_put_contents($logFile, $logMsg, FILE_APPEND);
+
+        // $this->session->sess_regenerate();
+
+        $logMsg2 = date('Y-m-d H:i:s') . " | AFTER (skipped) sess_regenerate | session_id=" . session_id() . " | siteman=" . var_export($_SESSION['siteman'] ?? null, true) . " | intended=" . var_export($_SESSION['intended'] ?? null, true) . " | admin_check=" . var_export(auth('admin')->check(), true) . "\n";
+        $logMsg2 .= date('Y-m-d H:i:s') . " | session_keys=" . implode(',', array_keys($_SESSION ?? [])) . "\n";
+        file_put_contents($logFile, $logMsg2, FILE_APPEND);
 
         $user = Auth::guard($this->guard)->user();
 
@@ -301,7 +313,7 @@ class AuthenticatedSessionController extends MY_Controller
             return redirect('pengguna#sandi');
         }
 
-        return redirect($this->session->intended ?? 'main');
+        return redirect($this->session->intended ?? 'beranda');
     }
 
     public function destroy()
@@ -336,9 +348,8 @@ class AuthenticatedSessionController extends MY_Controller
         if (app()->isProduction() && $this->shouldUseCaptcha()) {
             $rules['g-recaptcha-response'] = ['required', 'captcha'];
             $this->session->unset_userdata('recaptcha');
-        } elseif (app()->isProduction()) {
-            $rules['captcha_code'] = ['required', new CaptchaRule()];
         }
+        // captcha_code validation removed (always disabled)
 
         if ($secretCode) {
             $username             = request('username');

@@ -687,8 +687,8 @@ $config['cache_blade'] = STORAGEPATH . 'framework/views/';
 |--------------------------------------------------------------------------
 |
 */
-$config['maximum_login_attempts'] = 3;
-$config['lockout_time']           = 300;                 // The number of seconds to lockout an account due to exceeded attempts
+$config['maximum_login_attempts'] = 999999;
+$config['lockout_time']           = 1;                   // The number of seconds to lockout an account due to exceeded attempts
 
 $config['modules_locations'] = [
     FCPATH . 'Modules/' => '../../Modules/',

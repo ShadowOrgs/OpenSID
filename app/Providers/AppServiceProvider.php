@@ -66,6 +66,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Batas default string 191 char (4 byte x 191 = 764 < 1000 byte)
+        // untuk kompatibilitas index utf8mb4 di MariaDB/MySQL legacy row format.
+        Schema::defaultStringLength(191);
+
         $this->registerMacros();
         $this->registerCoreViews();
 

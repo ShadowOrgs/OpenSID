@@ -1,0 +1,149 @@
+﻿Response length: 6681
+--- Full response ---
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>OpenSID Desa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="http://localhost/opensid/assets/css/login-style.css?v0c485f16620c4172092c37214dc3897d" media="screen">
+    <link rel="stylesheet" href="http://localhost/opensid/assets/css/login-form-elements.css?veaf0688309ecca3286d359fbe299eb0a" media="screen">
+    <link rel="stylesheet" href="http://localhost/opensid/assets/bootstrap/css/bootstrap.bar.css?v559a81d2e423659bb16fb6c34261acb2" media="screen">
+    <link rel="stylesheet" href="http://localhost/opensid/assets/js/sweetalert2/sweetalert2.min.css?v70496681a0ffc933bca038e294d133ca">
+            <link rel='stylesheet' href="http://localhost/opensid/desa/pengaturan/siteman/siteman.css">
+        <link rel="shortcut icon" href="http://localhost/opensid/favicon.ico?v8e9d4d6135c7d035883f12aa37ead2d9" />
+    <style type="text/css">
+        body.login {
+            background-image: url('http://localhost/opensid/assets/css/images/latar_login.jpg?v4c6907b07cbb39745929ca335ee61ca4');
+        }
+    </style>
+    <script src="http://localhost/opensid/assets/bootstrap/js/jquery.min.js?v473957cfb255a781b42cb2af51d54a3b"></script>
+    <script src="http://localhost/opensid/assets/js/jquery.validate.min.js?v932f28fd74f2fe7599d78ca6c1b06610"></script>
+    <script src="http://localhost/opensid/assets/js/validasi.js?v93082cafda7a83098c70335c6518a6ae"></script>
+    <script src="http://localhost/opensid/assets/js/localization/messages_id.js?vec1fe16078a5ca8bcf0e507222021091"></script>
+    <script src="http://localhost/opensid/assets/js/sweetalert2/sweetalert2.all.min.js?v898dec13eea20c7a6b76a955a25b25c2"></script>
+    <!-- CSRF Token -->
+    <script type="text/javascript">
+        var csrfParam = "sidcsrf";
+        var csrfVal = "3591fd2066874dcb2b67c42d44d77787";
+
+        function getCsrfToken() {
+            return csrfVal;
+        }
+    </script>
+    <!-- jQuery Cookie -->
+    <script src="http://localhost/opensid/assets/bootstrap/js/jquery.cookie.min.js?v23d834419c7ccced820e192be7081228"></script>
+    <script src="http://localhost/opensid/assets/js/anti-csrf.js?vf4a5b97528afb0a9e411365dc8ebe658"></script>
+</head>
+
+<body class="login">
+    <div class="top-content">
+        <div class="inner-bg">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-4 col-sm-offset-4 form-box">
+                        <div class="form-top">
+                            <a href="http://localhost/opensid/">
+                                <img src="http://localhost/opensid/assets/files/logo/opensid_logo.png" alt="" class="img-responsive" style="width: 100px;" />
+                                                            </a>
+                            <div class="login-footer-top">
+                                <h1>Desa </h1>
+                                <h3>
+                                    <br /><br />Kodepos 
+                                    <br />Kecamatan <br />Kabupaten 
+                                </h3>
+                            </div>
+                                                                                </div>
+                        <div class="form-bottom">
+
+                                <form id="validasi" class="login-form" action="http://localhost/opensid/siteman/auth" method="post">
+        <div class="form-group">
+            <input
+                name="username"
+                type="text"
+                autocomplete="off"
+                placeholder="Nama pengguna"
+                                class="form-username form-control required"
+                maxlength="100"
+            >
+        </div>
+        <div class="form-group">
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="off"
+                placeholder="Kata sandi"
+                                class="form-username form-control required"
+                maxlength="100"
+            >
+        </div>
+
+        
+
+        <div class="form-group">
+            <input  type="checkbox" id="checkbox" class="form-checkbox">
+            <label for="checkbox" style="font-weight: unset">Tampilkan kata sandi</label>
+            <a href="http://localhost/opensid/siteman/lupa_sandi" class="btn" role="button" aria-pressed="true">Lupa kata sandi?</a>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn" >Masuk</button>
+        </div>
+
+                    <div class="form-group text-center">
+                <a href="http://localhost/opensid/siteman/otp/form_login_otp" class="btn" role="button" aria-pressed="true">Masuk dengan OTP</a>
+            </div>
+            </form>
+
+                            <hr style="margin-top: 5px; margin-bottom: 5px;" />
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        
+    <script>
+        function start_countdown() {
+            let totalSeconds = 0;
+            const timer = setInterval(function() {
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+
+                if (totalSeconds <= 0) {
+                    clearInterval(timer);
+                    location.reload();
+                } else {
+                    document.getElementById("countdown").innerHTML = `Terlalu banyak upaya masuk. Silakan coba lagi dalam ${minutes} menit ${seconds} detik.`;
+                    totalSeconds--;
+                }
+            }, 1000);
+        }
+
+        $(document).ready(function() {
+            var pass = $("#password");
+            $('#checkbox').click(function() {
+                if (pass.attr('type') === "password") {
+                    pass.attr('type', 'text');
+                } else {
+                    pass.attr('type', 'password')
+                }
+            });
+            if ($('#countdown').length) {
+                start_countdown();
+            }
+
+            // Hapus localStorage untuk timer OTP login setiap kali halaman login utama dimuat.
+            // Ini untuk memastikan timer direset jika pengguna kembali ke halaman ini
+            // setelah gagal OTP atau membatalkan proses.
+            localStorage.removeItem('otpLoginExpiry');
+        });
+    </script>
+
+</body>
+
+</html>

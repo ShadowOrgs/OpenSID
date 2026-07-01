@@ -46,6 +46,16 @@ class Main extends MY_Controller
 
     public function index(): void
     {
+        // DEBUG: Log session state
+        $logFile = 'C:\wamp64\www\opensid\storage\logs\debug_main.log';
+        $sessionId = session_id();
+        $allSession = $_SESSION ?? [];
+        $sitemanValue = $_SESSION['siteman'] ?? null;
+        $isAdminCheck = auth('admin')->check();
+        $adminUser = auth('admin')->user() ? auth('admin')->user()->username : null;
+        $logMsg = date('Y-m-d H:i:s') . " | session_id=$sessionId | siteman=" . var_export($sitemanValue, true) . " | admin_check=" . var_export($isAdminCheck, true) . " | admin_user=$adminUser | all_keys=" . implode(',', array_keys($allSession)) . "\n";
+        file_put_contents($logFile, $logMsg, FILE_APPEND);
+
         // Kalau sehabis periksa data, paksa harus login lagi
         if (auth('admin_periksa')->check()) {
             auth('admin')->logout();

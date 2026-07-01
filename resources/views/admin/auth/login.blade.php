@@ -8,6 +8,9 @@
 
 @section('content')
     <form id="validasi" class="login-form" action="{{ $form_action }}" method="post">
+        @if (config_item('csrf_protection'))
+        <input type="hidden" name="{{ $token_name }}" value="{{ $token_value }}">
+        @endif
         <div class="form-group">
             <input
                 name="username"
@@ -32,26 +35,7 @@
             >
         </div>
 
-        @if ($isProduction && setting('google_recaptcha'))
-            {!! app('captcha')->display() !!}
-        @elseif ($isProduction)
-            <div class="form-group">
-                <a href="#" id="b-captcha" onclick="event.preventDefault(); document.getElementById('captcha').src = '{{ site_url('captcha') }}?' + Math.random();" style="color: #000000;">
-                    <img id="captcha" src="{{ site_url('captcha') }}" alt="CAPTCHA Image" />
-                </a>
-            </div>
-            <div class="form-group captcha">
-                <input
-                    name="captcha_code"
-                    type="text"
-                    class="form-control required"
-                    maxlength="6"
-                    placeholder="Masukkan kode di atas"
-                    @disabled($second)
-                    autocomplete="off"
-                />
-            </div>
-        @endif
+        {{-- CAPTCHA disabled (captcha_code removed) --}}
 
         <div class="form-group">
             <input @disabled($second) type="checkbox" id="checkbox" class="form-checkbox">

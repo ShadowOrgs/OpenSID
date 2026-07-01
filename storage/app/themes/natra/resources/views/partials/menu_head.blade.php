@@ -34,6 +34,7 @@
     }
 </style>
 
+<div class="mod-navbar">
 <nav class="navbar navbar-default" role="navigation">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -59,3 +60,4 @@
         </div>
     </div>
 </nav>
+</div>

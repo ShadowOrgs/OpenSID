@@ -1,4 +1,3 @@
 <FilesMatch "\.(php)$">
-    order allow,deny
-    allow from all
+    Require all granted
 </FilesMatch>
