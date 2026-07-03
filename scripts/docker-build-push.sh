@@ -69,8 +69,12 @@ if [ "$PUSH" = "true" ]; then
   echo ">> [2/5] Login ke Docker Hub..."
   if [ -n "${DOCKERHUB_TOKEN:-}" ]; then
     echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-  else
+  elif [ -t 0 ]; then
+    # Hanya login interaktif kalau stdin adalah TTY
     docker login -u "$DOCKERHUB_USERNAME"
+  else
+    # Non-TTY (CI/Docker Desktop) — pakai credential manager yang sudah ada
+    echo "    (skip login, pakai credential manager Docker Desktop)"
   fi
 else
   echo ""
