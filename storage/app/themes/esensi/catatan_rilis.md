@@ -1,4 +1,4 @@
-Catatan Rilis v2409.0.0 :
+Catatan Rilis v2409.0.1 :
 
 ### BUG : 
 1. Perbaikan menu versi mobile.

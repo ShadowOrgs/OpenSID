@@ -1,4 +1,4 @@
-Catatan Rilis v2409.0.0 :
+Catatan Rilis v2409.0.1 :
 
 ### TEKNIS :
 1. Penyesuaian halaman statis.
