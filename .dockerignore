@@ -5,6 +5,7 @@
 .cache-rector
 .php-cs-fixer.cache
 .phpunit.result.cache
+.env.production
 .env
 .env.*
 

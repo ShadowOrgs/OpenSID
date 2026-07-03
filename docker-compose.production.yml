@@ -1,0 +1,47 @@
+# ============================================================
+# OpenSID - Production Docker Compose
+# Pakai image dari Docker Hub (sikassep/opensid)
+# ============================================================
+# Cara pakai:
+#   docker compose -f docker-compose.production.yml up -d
+#
+# Atau copy ke Dokploy panel sebagai docker-compose file.
+# Jangan lupa set environment variables di panel Dokploy.
+# ============================================================
+
+services:
+  opensid:
+    image: sikassep/opensid:${OPENSID_IMAGE_TAG:-2606.0.1}
+    container_name: opensid
+    restart: unless-stopped
+    environment:
+      APP_URL: ${APP_URL:-https://desa.commitflow.space}
+      DATABASE_URL: ${DATABASE_URL:-}
+      DB_STRICT_MODE: ${DB_STRICT_MODE:-true}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-desa.commitflow.space}
+      TZ: ${TZ:-Asia/Jakarta}
+    volumes:
+      - opensid_desa:/var/www/html/desa
+      - opensid_storage:/var/www/html/storage
+    networks:
+      - dokploy-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.opensid.rule: "Host(`desa.commitflow.space`)"
+      traefik.http.routers.opensid.entrypoints: "websecure"
+      traefik.http.routers.opensid.tls: "true"
+      traefik.http.routers.opensid.tls.certresolver: "letsencrypt"
+      traefik.http.services.opensid.loadbalancer.server.port: "80"
+
+volumes:
+  opensid_desa:
+  opensid_storage:
+
+networks:
+  dokploy-network:
+    external: true
