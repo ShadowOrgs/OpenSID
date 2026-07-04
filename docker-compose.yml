@@ -1,16 +1,14 @@
 services:
   opensid:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: opensid:production
+    image: sikassep/opensid:2606.0.1
     container_name: opensid
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
-      APP_URL: ${APP_URL}
-      DATABASE_URL: ${DATABASE_URL}
+      APP_NAME: ${APP_NAME:-OpenSID}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-https://desa.commitflow.space}
+      DATABASE_URL: ${DATABASE_URL:-}
       DB_STRICT_MODE: ${DB_STRICT_MODE:-true}
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-desa.commitflow.space}
       TZ: ${TZ:-Asia/Jakarta}
