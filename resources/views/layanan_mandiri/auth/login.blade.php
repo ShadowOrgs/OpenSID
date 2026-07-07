@@ -39,6 +39,13 @@
                 <button type="button" class="btn btn-block bg-green"><b>LUPA PIN</b></button>
             </a>
         </div>
+        <div class="form-group">
+            <a href="https://is3.cloudhost.id/public-files/desa/layanan-mandiri-warga.apk" target="_blank">
+                <button type="button" class="btn btn-block bg-orange">
+                    <i class="fa fa-android"></i> &nbsp;<b>UNDUH APLIKASI MOBILE</b>
+                </button>
+            </a>
+        </div>
         @if ($cek_anjungan['tipe'] == 1)
             <div class="form-group">
                 <a href="<?= route('anjungan.index') ?>">

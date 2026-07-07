@@ -19,6 +19,7 @@
                 <div class="mod-hero-actions">
                     <a href="#artikel" class="mod-hero-cta">Baca Berita Terbaru</a>
                     <a href="{{ site_url('layanan-mandiri') }}" class="mod-hero-cta mod-hero-cta--ghost">Layanan Mandiri</a>
+                    <a href="https://is3.cloudhost.id/public-files/desa/layanan-mandiri-warga.apk" class="mod-hero-cta mod-hero-cta--ghost" style="background-color: #e08e0b; border-color: #e08e0b; color: white;" target="_blank"><i class="fa fa-android"></i> Unduh Aplikasi</a>
                 </div>
             </div>
             <div class="mod-hero-card">
