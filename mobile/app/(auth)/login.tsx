@@ -1,5 +1,5 @@
 import { getMobileHealth, login, type MobileHealth } from '@/api/auth';
-import { API_URL, ApiError } from '@/api/client';
+import { ApiError } from '@/api/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { AppButton } from '@/components/AppButton';
 import { AppDialog } from '@/components/AppDialog';
@@ -9,9 +9,9 @@ import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
-  const [nik, setNik] = useState('3211220803910013');
-  const [password, setPassword] = useState('123456');
+  const { signIn, changeVillage, selectedVillage } = useAuth();
+  const [nik, setNik] = useState('');
+  const [password, setPassword] = useState('');
   const [health, setHealth] = useState<MobileHealth | null>(null);
   const [dialog, setDialog] = useState<{ title: string; message: string; variant: 'error' } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,13 +36,18 @@ export default function LoginScreen() {
     }
   }
 
+  async function handleChangeVillage() {
+    await changeVillage();
+    router.replace('/(auth)/pilih-desa');
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.brandBlock}>
         <View style={styles.logoFrame}>
           {health?.desa.logo_url ? <Image source={{ uri: health.desa.logo_url }} style={styles.logo} /> : <Ionicons name="business" size={34} color="#0073b7" />}
         </View>
-        <Text style={styles.brand}>{health?.desa.nama ?? 'OpenSID Mandiri'}</Text>
+        <Text style={styles.brand}>{health?.desa.nama ?? selectedVillage?.nama ?? 'OpenSID Mandiri'}</Text>
         <Text style={styles.subtitle}>{[health?.desa.kecamatan, health?.desa.kabupaten].filter(Boolean).join(', ') || 'Layanan Mandiri Desa'}</Text>
       </View>
 
@@ -51,13 +56,17 @@ export default function LoginScreen() {
         <TextInput style={styles.input} placeholder="NIK" keyboardType="number-pad" maxLength={16} value={nik} onChangeText={setNik} />
         <TextInput style={styles.input} placeholder="PIN" keyboardType="number-pad" maxLength={6} secureTextEntry value={password} onChangeText={setPassword} />
 
-        <Text style={styles.apiUrl}>API: {API_URL}</Text>
 
         <AppButton label="Masuk" icon="log-in" onPress={submit} loading={loading} />
 
         <Pressable style={styles.registerButton} onPress={() => router.push('/(auth)/register')}>
           <Ionicons name="person-add" size={19} color="#0073b7" />
           <Text style={styles.registerText}>Daftar Akun Baru</Text>
+        </Pressable>
+
+        <Pressable style={styles.changeVillageButton} onPress={handleChangeVillage}>
+          <Ionicons name="swap-horizontal" size={19} color="#e08e0b" />
+          <Text style={styles.changeVillageText}>Ganti Desa</Text>
         </Pressable>
       </View>
       <AppDialog
@@ -105,4 +114,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   registerText: { color: '#0073b7', fontWeight: '800' },
+  changeVillageButton: {
+    minHeight: 46,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#e08e0b',
+    backgroundColor: '#fffdf5',
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  changeVillageText: { color: '#e08e0b', fontWeight: '800' },
 });

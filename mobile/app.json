@@ -3,6 +3,10 @@
     "name": "OpenSID Mandiri",
     "slug": "opensid-mandiri",
     "scheme": "opensidmandiri",
+    "icon": "./assets/logo-desa.png",
+    "web": {
+      "favicon": "./assets/logo-desa.png"
+    },
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",

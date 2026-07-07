@@ -1,5 +1,4 @@
-import { apiRequest } from './client';
-import { API_URL } from './client';
+import { apiRequest, getApiUrl } from './client';
 import { getToken } from '@/auth/tokenStorage';
 
 export type Biodata = Record<string, string | number | null>;
@@ -105,5 +104,5 @@ export function getLapak(params?: { keyword?: string; category_id?: number }) {
 
 export async function getPrintUrl(type: 'biodata' | 'kk') {
   const token = await getToken();
-  return `${API_URL}/print/${type}?token=${encodeURIComponent(token ?? '')}`;
+  return `${getApiUrl()}/print/${type}?token=${encodeURIComponent(token ?? '')}`;
 }

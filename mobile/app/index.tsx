@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 
 export default function Index() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, selectedVillage } = useAuth();
 
   if (isLoading) {
     return (
@@ -11,6 +11,10 @@ export default function Index() {
         <ActivityIndicator />
       </View>
     );
+  }
+
+  if (!selectedVillage) {
+    return <Redirect href="/(auth)/pilih-desa" />;
   }
 
   return <Redirect href={user ? '/(tabs)' : '/(auth)/login'} />;

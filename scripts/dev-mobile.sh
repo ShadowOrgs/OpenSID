@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export MSYS_NO_PATHCONV=1
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MOBILE_DIR="$ROOT_DIR/mobile"
@@ -107,6 +108,11 @@ ensure_dev_setup() {
 detect_lan_ip() {
   if [[ -n "${DEV_API_HOST:-}" ]]; then
     echo "$DEV_API_HOST"
+    return
+  fi
+
+  if command -v ipconfig >/dev/null 2>&1; then
+    ipconfig | awk '/adapter/ {is_virtual = ($0 ~ /[vV]Ethernet|[vV]irtual|[vV]box|[vV]mware/)} /IPv4 Address/ {if (!is_virtual) {split($0, a, ":"); gsub(/[ \r]/, "", a[2]); print a[2]; exit}}'
     return
   fi
 

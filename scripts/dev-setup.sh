@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export MSYS_NO_PATHCONV=1
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -113,7 +114,7 @@ ensure_web_image() {
 wait_for_db() {
   echo "Menunggu MariaDB siap..."
   for _ in $(seq 1 90); do
-    if docker exec -e MYSQL_PWD="$DB_ROOT_PASSWORD" "$DB_CONTAINER" mysqladmin ping -uroot --silent >/dev/null 2>&1; then
+    if docker exec -e MYSQL_PWD="$DB_ROOT_PASSWORD" "$DB_CONTAINER" mysql -uroot -e "SELECT 1" >/dev/null 2>&1; then
       echo "MariaDB siap."
       return
     fi
@@ -172,8 +173,8 @@ import_dummy_db_if_empty() {
 
   echo "Import dummy database ke $DB_NAME..."
   docker exec -e MYSQL_PWD="$DB_ROOT_PASSWORD" "$DB_CONTAINER" mysql -uroot -e "DROP DATABASE IF EXISTS \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
-  sed "s/USE \`opensid\`/USE \`${DB_NAME}\`/g; s/CREATE DATABASE .* \`opensid\`/CREATE DATABASE /*!32312 IF NOT EXISTS*/ \`${DB_NAME}\`/g" "$dump_file" \
-    | docker exec -i -e MYSQL_PWD="$DB_ROOT_PASSWORD" "$DB_CONTAINER" mysql -uroot --default-character-set=utf8mb4
+  sed "/enable the sandbox mode/d; s|USE \`opensid\`|USE \`${DB_NAME}\`|g; s|CREATE DATABASE .* \`opensid\`|CREATE DATABASE /*!32312 IF NOT EXISTS*/ \`${DB_NAME}\`|g" "$dump_file" \
+    | docker exec -i -e MYSQL_PWD="$DB_ROOT_PASSWORD" "$DB_CONTAINER" mysql -uroot --default-character-set=utf8mb4 "${DB_NAME}"
 
   docker exec -e MYSQL_PWD="$DB_ROOT_PASSWORD" "$DB_CONTAINER" mysql -uroot -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"
 }
