@@ -6,7 +6,7 @@ import { AppDialog } from '@/components/AppDialog';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TextInput, View, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 
 export default function LoginScreen() {
   const { signIn, changeVillage, selectedVillage } = useAuth();
@@ -42,46 +42,54 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.brandBlock}>
-        <View style={styles.logoFrame}>
-          {health?.desa.logo_url ? <Image source={{ uri: health.desa.logo_url }} style={styles.logo} /> : <Ionicons name="business" size={34} color="#0073b7" />}
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          <View style={styles.brandBlock}>
+            <View style={styles.logoFrame}>
+              {health?.desa.logo_url ? <Image source={{ uri: health.desa.logo_url }} style={styles.logo} /> : <Ionicons name="business" size={34} color="#0073b7" />}
+            </View>
+            <Text style={styles.brand}>{health?.desa.nama ?? selectedVillage?.nama ?? 'OpenSID Mandiri'}</Text>
+            <Text style={styles.subtitle}>{[health?.desa.kecamatan, health?.desa.kabupaten].filter(Boolean).join(', ') || 'Layanan Mandiri Desa'}</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.title}>Masuk Layanan Mandiri</Text>
+
+            <Text style={styles.label}>Nomor Induk Kependudukan (NIK)</Text>
+            <TextInput style={styles.input} placeholder="Masukkan 16 digit NIK" placeholderTextColor="#8ba0a8" keyboardType="number-pad" maxLength={16} value={nik} onChangeText={setNik} />
+
+            <Text style={styles.label}>PIN Layanan Mandiri</Text>
+            <TextInput style={styles.input} placeholder="Masukkan 6 digit PIN" placeholderTextColor="#8ba0a8" keyboardType="number-pad" maxLength={6} secureTextEntry value={password} onChangeText={setPassword} />
+
+            <AppButton label="Masuk" icon="log-in" onPress={submit} loading={loading} />
+
+            <Pressable style={styles.registerButton} onPress={() => router.push('/(auth)/register')}>
+              <Ionicons name="person-add" size={19} color="#0073b7" />
+              <Text style={styles.registerText}>Daftar Akun Baru</Text>
+            </Pressable>
+
+            <Pressable style={styles.changeVillageButton} onPress={handleChangeVillage}>
+              <Ionicons name="swap-horizontal" size={19} color="#e08e0b" />
+              <Text style={styles.changeVillageText}>Ganti Desa</Text>
+            </Pressable>
+          </View>
+          <AppDialog
+            visible={dialog !== null}
+            title={dialog?.title ?? ''}
+            message={dialog?.message ?? ''}
+            variant={dialog?.variant}
+            onClose={() => setDialog(null)}
+          />
         </View>
-        <Text style={styles.brand}>{health?.desa.nama ?? selectedVillage?.nama ?? 'OpenSID Mandiri'}</Text>
-        <Text style={styles.subtitle}>{[health?.desa.kecamatan, health?.desa.kabupaten].filter(Boolean).join(', ') || 'Layanan Mandiri Desa'}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.title}>Masuk Layanan Mandiri</Text>
-        <TextInput style={styles.input} placeholder="NIK" keyboardType="number-pad" maxLength={16} value={nik} onChangeText={setNik} />
-        <TextInput style={styles.input} placeholder="PIN" keyboardType="number-pad" maxLength={6} secureTextEntry value={password} onChangeText={setPassword} />
-
-
-        <AppButton label="Masuk" icon="log-in" onPress={submit} loading={loading} />
-
-        <Pressable style={styles.registerButton} onPress={() => router.push('/(auth)/register')}>
-          <Ionicons name="person-add" size={19} color="#0073b7" />
-          <Text style={styles.registerText}>Daftar Akun Baru</Text>
-        </Pressable>
-
-        <Pressable style={styles.changeVillageButton} onPress={handleChangeVillage}>
-          <Ionicons name="swap-horizontal" size={19} color="#e08e0b" />
-          <Text style={styles.changeVillageText}>Ganti Desa</Text>
-        </Pressable>
-      </View>
-      <AppDialog
-        visible={dialog !== null}
-        title={dialog?.title ?? ''}
-        message={dialog?.message ?? ''}
-        variant={dialog?.variant}
-        onClose={() => setDialog(null)}
-      />
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 22, backgroundColor: '#ecf0f5' },
+  scrollContainer: { flexGrow: 1, justifyContent: 'center', backgroundColor: '#ecf0f5' },
+  container: { padding: 22 },
   brandBlock: { alignItems: 'center', marginBottom: 22 },
   logoFrame: {
     width: 82,
@@ -99,7 +107,8 @@ const styles = StyleSheet.create({
   subtitle: { color: '#607d89', fontWeight: '700', marginTop: 4, textAlign: 'center' },
   card: { borderRadius: 8, backgroundColor: '#fff', padding: 18, borderWidth: 1, borderColor: '#dce8ee' },
   title: { fontSize: 20, fontWeight: '800', color: '#15323d', marginBottom: 16 },
-  input: { height: 48, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 14, marginBottom: 12, borderWidth: 1, borderColor: '#d9e3e8' },
+  label: { fontSize: 13, fontWeight: '700', color: '#455a64', marginBottom: 6, marginTop: 4 },
+  input: { height: 48, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 14, marginBottom: 12, borderWidth: 1, borderColor: '#d9e3e8', color: '#15323d' },
   apiUrl: { color: '#607d89', fontSize: 12, marginBottom: 12 },
   registerButton: {
     minHeight: 46,

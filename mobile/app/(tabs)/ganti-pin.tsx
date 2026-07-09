@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { changePin } from '@/api/services';
@@ -38,22 +38,24 @@ export default function GantiPinScreen() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Ganti PIN</Text>
-      <View style={styles.section}>
-        <TextInput value={currentPin} onChangeText={setCurrentPin} placeholder="PIN lama" keyboardType="number-pad" secureTextEntry style={styles.input} placeholderTextColor="#8ba0a8" />
-        <TextInput value={newPin} onChangeText={setNewPin} placeholder="PIN baru" keyboardType="number-pad" secureTextEntry style={styles.input} placeholderTextColor="#8ba0a8" />
-        <TextInput value={confirmPin} onChangeText={setConfirmPin} placeholder="Konfirmasi PIN baru" keyboardType="number-pad" secureTextEntry style={styles.input} placeholderTextColor="#8ba0a8" />
-        <AppButton label={submitting ? 'Menyimpan...' : 'Simpan PIN'} icon="save" onPress={submit} loading={submitting} />
-      </View>
-      <AppDialog
-        visible={dialog !== null}
-        title={dialog?.title ?? ''}
-        message={dialog?.message ?? ''}
-        variant={dialog?.variant}
-        onClose={() => setDialog(null)}
-      />
-    </ScrollView>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title}>Ganti PIN</Text>
+        <View style={styles.section}>
+          <TextInput value={currentPin} onChangeText={setCurrentPin} placeholder="PIN lama" keyboardType="number-pad" secureTextEntry style={styles.input} placeholderTextColor="#8ba0a8" />
+          <TextInput value={newPin} onChangeText={setNewPin} placeholder="PIN baru" keyboardType="number-pad" secureTextEntry style={styles.input} placeholderTextColor="#8ba0a8" />
+          <TextInput value={confirmPin} onChangeText={setConfirmPin} placeholder="Konfirmasi PIN baru" keyboardType="number-pad" secureTextEntry style={styles.input} placeholderTextColor="#8ba0a8" />
+          <AppButton label={submitting ? 'Menyimpan...' : 'Simpan PIN'} icon="save" onPress={submit} loading={submitting} />
+        </View>
+        <AppDialog
+          visible={dialog !== null}
+          title={dialog?.title ?? ''}
+          message={dialog?.message ?? ''}
+          variant={dialog?.variant}
+          onClose={() => setDialog(null)}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

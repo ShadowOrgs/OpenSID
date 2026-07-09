@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
-import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { getDocuments, uploadDocument, type MandiriDocument } from '@/api/documents';
@@ -87,11 +87,13 @@ export default function DokumenScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.page}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView
+        style={styles.page}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
+        keyboardShouldPersistTaps="handled"
+      >
       <Text style={styles.title}>Dokumen</Text>
       {message ? <Text style={styles.notice}>{message}</Text> : null}
 
@@ -135,7 +137,8 @@ export default function DokumenScreen() {
         variant={dialog?.variant}
         onClose={() => setDialog(null)}
       />
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

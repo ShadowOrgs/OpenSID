@@ -14,6 +14,8 @@ import {
   Text,
   TextInput,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 
 const REGISTRY_URL = 'https://is3.cloudhost.id/public-files/desa/daftar-desa.json';
@@ -72,26 +74,11 @@ export default function PilihDesaScreen() {
     router.replace('/(auth)/login');
   }
 
-  function handleUseMock() {
-    const mockVillages: Village[] = [
-      {
-        id: 'mock-emulator',
-        nama: 'Desa Melati (Emulator Android)',
-        api_url: 'http://10.0.2.2:8081/api/mobile/v1',
-      },
-      {
-        id: 'mock-localhost',
-        nama: 'Desa Mawar (Localhost Port 8081)',
-        api_url: 'http://localhost:8081/api/mobile/v1',
-      },
-    ];
-    setVillages(mockVillages);
-    setFilteredVillages(mockVillages);
-    setError(null);
-  }
+
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <View style={styles.container}>
       <View style={styles.headerBlock}>
         <View style={styles.logoFrame}>
           <Image source={require('../../assets/logo-desa.png')} style={styles.logoImage} />
@@ -130,9 +117,7 @@ export default function PilihDesaScreen() {
                 icon="refresh"
                 onPress={() => fetchVillages(REGISTRY_URL)}
               />
-              <Pressable style={styles.fallbackButton} onPress={handleUseMock}>
-                <Text style={styles.fallbackButtonText}>Gunakan Mock Lokal (Offline)</Text>
-              </Pressable>
+
             </View>
           </View>
         )}
@@ -161,7 +146,8 @@ export default function PilihDesaScreen() {
           />
         )}
       </View>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -237,14 +223,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   errorActions: { width: '100%', gap: 10 },
-  fallbackButton: {
-    height: 44,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#cfd8dc',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fafafa',
-  },
-  fallbackButtonText: { color: '#607d89', fontWeight: '700' },
+
 });

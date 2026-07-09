@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 
 type PickedFile = { uri: string; name: string; type: string };
 
@@ -97,63 +97,65 @@ export default function RegisterScreen() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <View style={styles.logoFrame}>
-          {health?.desa.logo_url ? <Image source={{ uri: health.desa.logo_url }} style={styles.logo} /> : <Ionicons name="business" size={32} color="#0073b7" />}
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <View style={styles.logoFrame}>
+            {health?.desa.logo_url ? <Image source={{ uri: health.desa.logo_url }} style={styles.logo} /> : <Ionicons name="business" size={32} color="#0073b7" />}
+          </View>
+          <View style={styles.headerText}>
+            <Text style={styles.village}>{health?.desa.nama ?? 'OpenSID Mandiri'}</Text>
+            <Text style={styles.subtitle}>Daftar Layanan Mandiri</Text>
+          </View>
         </View>
-        <View style={styles.headerText}>
-          <Text style={styles.village}>{health?.desa.nama ?? 'OpenSID Mandiri'}</Text>
-          <Text style={styles.subtitle}>Daftar Layanan Mandiri</Text>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data Penduduk</Text>
+          <Field label="Nama" value={form.nama} onChangeText={(value) => update('nama', value)} />
+          <DateField value={form.tanggallahir} onPress={() => setShowBirthPicker(true)} />
+          {showBirthPicker ? (
+            <DateTimePicker
+              value={form.tanggallahir ? new Date(`${form.tanggallahir}T00:00:00`) : new Date(1990, 0, 1)}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              minimumDate={new Date(1900, 0, 1)}
+              onChange={changeBirthDate}
+            />
+          ) : null}
+          <Field label="NIK" value={form.nik} onChangeText={(value) => update('nik', value)} keyboardType="number-pad" maxLength={16} />
+          <Field label="Nomor KK" value={form.no_kk} onChangeText={(value) => update('no_kk', value)} keyboardType="number-pad" maxLength={16} />
+          <Field label="Email" value={form.email} onChangeText={(value) => update('email', value)} keyboardType="email-address" />
+          <Field label="Telegram opsional" value={form.telegram} onChangeText={(value) => update('telegram', value)} keyboardType="number-pad" />
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Data Penduduk</Text>
-        <Field label="Nama" value={form.nama} onChangeText={(value) => update('nama', value)} />
-        <DateField value={form.tanggallahir} onPress={() => setShowBirthPicker(true)} />
-        {showBirthPicker ? (
-          <DateTimePicker
-            value={form.tanggallahir ? new Date(`${form.tanggallahir}T00:00:00`) : new Date(1990, 0, 1)}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            minimumDate={new Date(1900, 0, 1)}
-            onChange={changeBirthDate}
-          />
-        ) : null}
-        <Field label="NIK" value={form.nik} onChangeText={(value) => update('nik', value)} keyboardType="number-pad" maxLength={16} />
-        <Field label="Nomor KK" value={form.no_kk} onChangeText={(value) => update('no_kk', value)} keyboardType="number-pad" maxLength={16} />
-        <Field label="Email" value={form.email} onChangeText={(value) => update('email', value)} keyboardType="email-address" />
-        <Field label="Telegram opsional" value={form.telegram} onChangeText={(value) => update('telegram', value)} keyboardType="number-pad" />
-      </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Keamanan</Text>
+          <Field label="PIN 6 digit" value={form.password} onChangeText={(value) => update('password', value)} keyboardType="number-pad" secureTextEntry maxLength={6} />
+          <Field label="Konfirmasi PIN" value={form.password_confirmation} onChangeText={(value) => update('password_confirmation', value)} keyboardType="number-pad" secureTextEntry maxLength={6} />
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Keamanan</Text>
-        <Field label="PIN 6 digit" value={form.password} onChangeText={(value) => update('password', value)} keyboardType="number-pad" secureTextEntry maxLength={6} />
-        <Field label="Konfirmasi PIN" value={form.password_confirmation} onChangeText={(value) => update('password_confirmation', value)} keyboardType="number-pad" secureTextEntry maxLength={6} />
-      </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Dokumen Verifikasi</Text>
+          <UploadButton label="Scan KTP" file={files.scan_1} onPress={() => pickFile('scan_1')} />
+          <UploadButton label="Scan KK" file={files.scan_2} onPress={() => pickFile('scan_2')} />
+          <UploadButton label="Foto selfie dengan KTP" file={files.scan_3} onPress={() => pickFile('scan_3')} />
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dokumen Verifikasi</Text>
-        <UploadButton label="Scan KTP" file={files.scan_1} onPress={() => pickFile('scan_1')} />
-        <UploadButton label="Scan KK" file={files.scan_2} onPress={() => pickFile('scan_2')} />
-        <UploadButton label="Foto selfie dengan KTP" file={files.scan_3} onPress={() => pickFile('scan_3')} />
-      </View>
-
-      <AppButton label="Buat Akun" icon="person-add" onPress={submit} loading={loading} />
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={18} color="#0073b7" />
-        <Text style={styles.backText}>Kembali ke Login</Text>
-      </Pressable>
-      <AppDialog
-        visible={dialog !== null}
-        title={dialog?.title ?? ''}
-        message={dialog?.message ?? ''}
-        variant={dialog?.variant}
-        onClose={() => setDialog(null)}
-      />
-    </ScrollView>
+        <AppButton label="Buat Akun" icon="person-add" onPress={submit} loading={loading} />
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={18} color="#0073b7" />
+          <Text style={styles.backText}>Kembali ke Login</Text>
+        </Pressable>
+        <AppDialog
+          visible={dialog !== null}
+          title={dialog?.title ?? ''}
+          message={dialog?.message ?? ''}
+          variant={dialog?.variant}
+          onClose={() => setDialog(null)}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -174,7 +176,7 @@ function Field(props: ComponentProps<typeof TextInput> & { label: string }) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} autoCapitalize="none" {...inputProps} />
+      <TextInput style={styles.input} autoCapitalize="none" placeholderTextColor="#8ba0a8" {...inputProps} />
     </View>
   );
 }
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#15323d', fontSize: 16, fontWeight: '900' },
   field: { gap: 6 },
   label: { fontWeight: '700', color: '#31515e', marginBottom: 6 },
-  input: { height: 46, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#d9e3e8' },
+  input: { height: 46, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#d9e3e8', color: '#15323d' },
   dateButton: { minHeight: 46, borderRadius: 8, borderWidth: 1, borderColor: '#d9e3e8', backgroundColor: '#fff', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   dateText: { flex: 1, color: '#15323d', fontWeight: '700' },
   placeholderText: { color: '#8ba0a8' },

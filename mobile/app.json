@@ -3,6 +3,7 @@
     "name": "Layanan Mandiri Warga",
     "slug": "opensid-mandiri",
     "scheme": "opensidmandiri",
+    "jsEngine": "hermes",
     "icon": "./assets/logo-desa.png",
     "web": {
       "favicon": "./assets/logo-desa.png"
